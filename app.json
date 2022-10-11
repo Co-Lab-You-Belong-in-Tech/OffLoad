@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "HeadiesBox",
+    "slug": "HeadiesBox",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "plugins": [
+      "@react-native-google-signin/google-signin"
+    ],
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.emmaotuonye3.HeadiesBox"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b7f948fc-4c9e-46a2-987e-66c13103dfa1"
+      }
+    }
+  }
+}
