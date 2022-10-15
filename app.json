@@ -4,22 +4,23 @@
     "slug": "HeadiesBox",
     "version": "1.0.0",
     "orientation": "portrait",
-    "plugins": [
-      "@react-native-google-signin/google-signin"
-    ],
+    "plugins": ["@react-native-google-signin/google-signin"],
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "image": "./assets/splashscreen.png",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#3131C9",
+      "style": "dark",
+      "translucent": true
     },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
@@ -29,14 +30,19 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.emmaotuonye3.HeadiesBox"
+      "splash": {
+        "image": "./assets/splashscreen.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.jsjags01.HeadiesBox"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "b7f948fc-4c9e-46a2-987e-66c13103dfa1"
+        "projectId": "710a167e-4757-4c32-8755-d8044ef06d1f"
       }
     }
   }

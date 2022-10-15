@@ -1,49 +1,49 @@
 {
   "project_info": {
-    "project_number": "846127441207",
-    "project_id": "headiesbox",
-    "storage_bucket": "headiesbox.appspot.com"
+    "project_number": "985628169597",
+    "project_id": "headiesbox-project",
+    "storage_bucket": "headiesbox-project.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:846127441207:android:2da61bd195af1ce61226b2",
+        "mobilesdk_app_id": "1:985628169597:android:4b58039d9b99c156c8e814",
         "android_client_info": {
-          "package_name": "com.emmaotuonye3.HeadiesBox"
+          "package_name": "com.jsjags01.HeadiesBox"
         }
       },
       "oauth_client": [
         {
-          "client_id": "846127441207-bpashun58ivfukvtdraru9fnu1ok50q9.apps.googleusercontent.com",
+          "client_id": "985628169597-1p9d05c73c4qcsnfihpeogla5i6qrnvh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.emmaotuonye3.HeadiesBox",
-            "certificate_hash": "79803508b720db1676636487f2e9c5c43d2819a8"
+            "package_name": "com.jsjags01.HeadiesBox",
+            "certificate_hash": "0c51c814cf39848bbfbe798e24939aef395f0af6"
           }
         },
         {
-          "client_id": "846127441207-ffoujo07oeot3hc3dhc20rmh9rqobeo0.apps.googleusercontent.com",
+          "client_id": "985628169597-qleggsi28vddodh8pfh16euo0ac1u287.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.emmaotuonye3.HeadiesBox",
-            "certificate_hash": "8e1d6aaa66d95d691ddb1fa71e2473ec0a616eb8"
+            "package_name": "com.jsjags01.HeadiesBox",
+            "certificate_hash": "b23619b1ece656520524e1781678f624bf3a0c36"
           }
         },
         {
-          "client_id": "846127441207-ilopm6jioq4cn3vderftfs3fsmonbfmv.apps.googleusercontent.com",
+          "client_id": "985628169597-hvqtufhr1or0f71b2udo27ontcv8s130.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAANAK6IJkgNxfNvI8Wvpi54ShgizEtOls"
+          "current_key": "AIzaSyA09CU_VR4Fk61epc2CY0JIkcL0T2uJyRw"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "846127441207-ilopm6jioq4cn3vderftfs3fsmonbfmv.apps.googleusercontent.com",
+              "client_id": "985628169597-hvqtufhr1or0f71b2udo27ontcv8s130.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

@@ -1,9 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import LoginScreen from "./screens/loginScreen";
 // import LoadingScreen from "./screens/loadingScreen";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  useNavigationContainerRef,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "./screens/homeScreen";
+import HomeScreen from "./screens/HomeScreen";
+import LogsScreen from "./screens/LogsScreen";
+import CalendarScreen from "./screens/CalendarScreen";
+import ProfileScreen from "./screens/ProfileScreen";
+
+import * as FileSystem from "expo-file-system";
 
 // imports for integration with firebase
 import "expo-dev-client";
@@ -15,15 +23,20 @@ import { Provider } from "react-redux";
 import { store } from "./store/store";
 import { ScrollView } from "react-native-web";
 import tw from "tailwind-react-native-classnames";
+import { useFonts } from "expo-font";
 // import TestRecord from "./screens/TestRecord";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [initializing, setInitializing] = useState(true);
 
+  const checkStorage = async () => {
+    const file = FileSystem.readDirectoryAsync();
+  };
+
   GoogleSignin.configure({
     webClientId:
-      "846127441207-ilopm6jioq4cn3vderftfs3fsmonbfmv.apps.googleusercontent.com",
+      "985628169597-hvqtufhr1or0f71b2udo27ontcv8s130.apps.googleusercontent.com",
   });
 
   const onAuthStateChanged = (user) => {
@@ -37,6 +50,12 @@ export default function App() {
   }, []);
 
   const Stack = createNativeStackNavigator();
+  const navigationRef = useNavigationContainerRef();
+
+  const [isLoaded] = useFonts({
+    inter: require("./assets/fonts/Inter-VariableFont.ttf"),
+    titan: require("./assets/fonts/TitanOne-Regular.ttf"),
+  });
 
   return (
     <Provider store={store}>
@@ -44,11 +63,32 @@ export default function App() {
         {!user ? (
           <LoginScreen />
         ) : (
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <Stack.Navigator>
               <Stack.Screen
                 name="home"
                 component={HomeScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="logs"
+                component={LogsScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="calendar"
+                component={CalendarScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="profile"
+                component={ProfileScreen}
                 options={{
                   headerShown: false,
                 }}

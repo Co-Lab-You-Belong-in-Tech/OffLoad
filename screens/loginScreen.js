@@ -30,7 +30,8 @@ export default function LoginScreen({ navigation }) {
 
     userSignedIn
       .then((user) => {
-        console.log("signed in");
+        if (user) return console.log("signed in");
+        throw new Error("No user found.");
       })
       .catch((err) => console.log(err));
   };

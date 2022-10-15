@@ -1,58 +1,60 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
-import { Entypo, Feather } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
+import { Octicons } from "@expo/vector-icons";
 import tw from "tailwind-react-native-classnames";
+import Record from "../assets/nav/Record.svg";
+import Calendar from "../assets/nav/Calendar.svg";
+import Profile from "../assets/nav/Profile.svg";
 
-const Nav = () => {
+const Nav = ({ navigation }) => {
   return (
     <View
-      style={tw` p-2  absolute bottom-0 left-0 w-full h-16  rounded-t-3xl bg-gray-200 flex-row items-end px-3 justify-between`}
+      style={tw.style(
+        "p-2",
+        "absolute",
+        "bottom-0",
+        "left-0",
+        "w-full",
+        "h-16",
+        "rounded-t-2xl",
+        "flex-row",
+        "items-end",
+        "px-3",
+        "justify-between",
+        {
+          backgroundColor: "#3131C9",
+          alignItems: "center",
+          paddingHorizntal: 10,
+        }
+      )}
     >
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("home")}>
         <View style={tw` items-center  rounded-sm`}>
-          <Entypo
-            style={tw`pb-2  font-light text-gray-500`}
-            name="home"
-            size={20}
-            color="black"
-          />
-          <Text style={tw`font-light text-xs text-gray-500`}>Home</Text>
+          <Record width={30} height={30} />
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity>
+      {/* <TouchableOpacity onPress={() => navigation.navigate("logs")}>
         <View style={tw` items-center rounded-sm`}>
-          <Feather
-            name="log-out"
-            style={tw`pb-2  font-light text-gray-500`}
+          <AntDesign
+            name="profile"
             size={20}
             color="black"
+            style={tw`pb-2 font-light text-gray-500`}
           />
-          <Text style={tw`font-light text-xs text-gray-500`}>Logs</Text>
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("calendar")}>
         <View style={tw`items-center rounded-sm`}>
-          <Feather
-            style={tw`pb-2 font-light text-gray-500`}
-            name="log-out"
-            size={20}
-            color="black"
-          />
-          <Text style={tw`font-light text-xs text-gray-500`}>Calendar</Text>
+          <Calendar width={30} height={30} />
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("profile")}>
         <View style={tw` items-center  rounded-sm`}>
-          <Feather
-            style={tw`pb-2 font-light text-gray-500`}
-            name="log-out"
-            size={20}
-            color="black"
-          />
-          <Text style={tw`font-light text-xs text-gray-500`}>Profile</Text>
+          <Profile width={30} height={30} />
         </View>
       </TouchableOpacity>
     </View>
