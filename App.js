@@ -6,6 +6,8 @@ import {
   useNavigationContainerRef,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import WelcomeScreen from "./screens/WelcomeScreen";
+import EmojiScreen from "./screens/EmojiScreen";
 import HomeScreen from "./screens/HomeScreen";
 import LogsScreen from "./screens/LogsScreen";
 import CalendarScreen from "./screens/CalendarScreen";
@@ -65,6 +67,20 @@ export default function App() {
         ) : (
           <NavigationContainer ref={navigationRef}>
             <Stack.Navigator>
+              <Stack.Screen
+                name="welcome"
+                component={WelcomeScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="emoji"
+                component={EmojiScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
               <Stack.Screen
                 name="home"
                 component={HomeScreen}

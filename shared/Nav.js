@@ -1,13 +1,16 @@
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
-import { AntDesign } from "@expo/vector-icons";
-import { Octicons } from "@expo/vector-icons";
 import tw from "tailwind-react-native-classnames";
 import Record from "../assets/nav/Record.svg";
 import Calendar from "../assets/nav/Calendar.svg";
 import Profile from "../assets/nav/Profile.svg";
+import { useDispatch, useSelector } from "react-redux";
+import { setScreen } from "../store/appSlice";
 
 const Nav = ({ navigation }) => {
+  const dispatch = useDispatch();
+  const { currentScreen } = useSelector((state) => state.app);
+
   return (
     <View
       style={tw.style(
@@ -20,16 +23,25 @@ const Nav = ({ navigation }) => {
         "rounded-t-2xl",
         "flex-row",
         "items-end",
-        "px-3",
+        "px-7",
         "justify-between",
         {
           backgroundColor: "#3131C9",
           alignItems: "center",
-          paddingHorizntal: 10,
         }
       )}
     >
-      <TouchableOpacity onPress={() => navigation.navigate("home")}>
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate("home");
+          dispatch(setScreen("home"));
+        }}
+        style={{
+          backgroundColor: currentScreen === "home" ? "#ffffff" : "transparent",
+          padding: 10,
+          borderRadius: 50,
+        }}
+      >
         <View style={tw` items-center  rounded-sm`}>
           <Record width={30} height={30} />
         </View>
@@ -41,18 +53,40 @@ const Nav = ({ navigation }) => {
             name="profile"
             size={20}
             color="black"
-            style={tw`pb-2 font-light text-gray-500`}
+            style={tw`pb-2 font-light text-gray-1000`}
           />
         </View>
       </TouchableOpacity> */}
 
-      <TouchableOpacity onPress={() => navigation.navigate("calendar")}>
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate("calendar");
+          dispatch(setScreen("calendar"));
+        }}
+        style={{
+          backgroundColor:
+            currentScreen === "calendar" ? "#ffffff" : "transparent",
+          padding: 10,
+          borderRadius: 50,
+        }}
+      >
         <View style={tw`items-center rounded-sm`}>
           <Calendar width={30} height={30} />
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate("profile")}>
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate("profile");
+          dispatch(setScreen("profile"));
+        }}
+        style={{
+          backgroundColor:
+            currentScreen === "profile" ? "#ffffff" : "transparent",
+          padding: 10,
+          borderRadius: 50,
+        }}
+      >
         <View style={tw` items-center  rounded-sm`}>
           <Profile width={30} height={30} />
         </View>

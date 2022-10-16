@@ -11,6 +11,7 @@ const HeaderHome = ({ signOut }) => {
         style={{
           fontFamily: "inter",
           fontSize: 20,
+          width: "auto",
         }}
       >
         {greetings()}

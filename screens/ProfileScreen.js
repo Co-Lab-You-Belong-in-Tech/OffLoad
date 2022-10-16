@@ -28,12 +28,19 @@ import { Audio } from "expo-av";
 import { ScrollView, Modal } from "react-native";
 import HeaderHome from "../shared/HeaderHome";
 
+import { useDispatch, useSelector } from "react-redux";
+import { setScreen, resetScreen } from "../store/appSlice";
+
 let recording;
 let soundObject;
 let intervalId;
 const timing = 1000;
 
 const ProfileScreen = ({ navigation }) => {
+  const dispatch = useDispatch();
+
+  const { currentScreen } = useSelector((state) => state.app);
+
   // Helper function for logging out user
   const signOutHandler = async () => {
     console.log("pressed");
@@ -43,6 +50,15 @@ const ProfileScreen = ({ navigation }) => {
       .then(() => console.log("logged out"))
       .catch((err) => console.log(err));
   };
+
+  // Set current screen on screen load
+  useEffect(() => {
+    dispatch(setScreen("profile"));
+
+    return () => {
+      dispatch(resetScreen());
+    };
+  }, [currentScreen]);
 
   return (
     <View style={tw`flex-1`}>

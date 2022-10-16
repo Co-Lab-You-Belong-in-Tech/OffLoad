@@ -3,12 +3,14 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  Button,
   TextInput,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
+  Modal,
+  ImageBackground,
 } from "react-native";
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useMemo } from "react";
 import tw from "tailwind-react-native-classnames";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import auth from "@react-native-firebase/auth";
@@ -16,25 +18,28 @@ import * as FileSystem from "expo-file-system";
 import firebase from "@react-native-firebase/app";
 import firestore from "@react-native-firebase/firestore";
 import Nav from "../shared/Nav";
-import {
-  Octicons,
-  Feather,
-  Entypo,
-  FontAwesome5,
-  Ionicons,
-  Fontisto,
-} from "@expo/vector-icons";
 import { Audio } from "expo-av";
-import { ScrollView, Modal, ImageBackground } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import NavTop from "../shared/NavTop";
 import HeaderHome from "../shared/HeaderHome";
+import moment from "moment";
+
 import Microphone from "../assets/homeScreen/Microphone.svg";
 import Stop from "../assets/homeScreen/Stop.svg";
 import Pause from "../assets/homeScreen/Pause.svg";
 import Reset from "../assets/homeScreen/Reset.svg";
 import Play from "../assets/homeScreen/Play.svg";
+import SmallPlay from "../assets/homeScreen/smallPlay.svg";
+import SmallPause from "../assets/homeScreen/smallPause.svg";
 import Save from "../assets/homeScreen/Save.svg";
 import Delete from "../assets/homeScreen/Remove.svg";
+import SoundWave from "../assets/homeScreen/soundwave.svg";
+import Pencil from "../assets/homeScreen/Pencil.svg";
+
+import { useDispatch, useSelector } from "react-redux";
+import { resetScreen, setScreen, storeEmojiId } from "../store/appSlice";
+import { emotions } from "../assets/emoticons/emotions";
+import { store } from "../store/store";
 
 let recording;
 let soundObject;
@@ -42,7 +47,13 @@ let intervalId;
 const timing = 1000;
 
 const HomeScreen = ({ navigation }) => {
+  const dispatch = useDispatch();
+
+  const { currentScreen } = useSelector((state) => state.app);
+  const { emojiId } = useSelector((state) => state.app);
+
   const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [recordings, setRecordings] = useState();
   const [firebaseSound, setFirebaseSound] = useState();
   const [message, setMessage] = useState("");
@@ -51,6 +62,10 @@ const HomeScreen = ({ navigation }) => {
   const [durationMillis, setDurationMillis] = useState(0);
   const [startTimer, setStartTimer] = useState(false);
   const [filename, setFilename] = useState("");
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [recordingIsPaused, setRecordingIsPaused] = useState(false);
 
   // Memoized timingInterval to avoid unnecessary re-renders
   const timingInterval = useCallback(() => {
@@ -58,6 +73,15 @@ const HomeScreen = ({ navigation }) => {
       setDurationMillis((prev) => prev + timing);
     }, timing);
   }, []);
+
+  const handleDate = useMemo(() => {
+    let str = moment().format("MMMM Do YYYY, h:mm:ss a");
+    if (str.includes("pm")) {
+      return str.replace("pm", "PM");
+    } else {
+      return str.replace("am", "AM");
+    }
+  }, [recording]);
 
   // Helper function for rendering countdown timer
   const showTime = (type, mill) => {
@@ -98,8 +122,10 @@ const HomeScreen = ({ navigation }) => {
 
       if (playbackStatus.isPlaying) {
         // Update your UI for the playing state
+        setIsPlaying(true);
       } else {
         // Update your UI for the paused state
+        setIsPlaying(false);
       }
 
       if (playbackStatus.isBuffering) {
@@ -173,6 +199,25 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const pauseRecording = async () => {
+    // If user is recording, pause it
+    if (recording && (recording !== null || recording !== undefined)) {
+      setStartTimer(false);
+      setRecordingIsPaused(true);
+      return recording.pauseAsync();
+    }
+  };
+
+  const continueRecording = async () => {
+    // If user's recording is paused, continue
+    const recordingStatus = await recording.getStatusAsync();
+    if (recording && !recordingStatus.isDoneRecording) {
+      setStartTimer(true);
+      setRecordingIsPaused(false);
+      return recording.startAsync();
+    }
+  };
+
   const saveRecording = async () => {
     // Get user's recorded audio stored in memory cache
     const uri = recording.getURI();
@@ -190,7 +235,7 @@ const HomeScreen = ({ navigation }) => {
       let fileUri =
         FileSystem.documentDirectory +
         "/audio-logs/" +
-        `${filename.trim().split(" ").join("-")}_${new Date()}.txt`;
+        `${filename.trim().split(" ").join("-")}_${handleDate}.txt`;
       if (dirStatus.exists) {
         // Write audio string into new file
         const res = await FileSystem.writeAsStringAsync(fileUri, base64, {
@@ -223,16 +268,113 @@ const HomeScreen = ({ navigation }) => {
       const dir = await FileSystem.readDirectoryAsync(
         FileSystem.documentDirectory + "/audio-logs"
       );
+
+      if (fileRes) {
+        setShowSaveModal(false);
+        setFilename("");
+        recording = undefined;
+        setIsRecording(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteRecording = () => {
+    setShowDeleteModal(false);
+    recording = undefined;
+    setIsRecording(false);
+  };
+
+  const resetRecording = async () => {
+    // reset users recording
+    await stopRecording().then(() => {
+      recording = undefined;
+      setShowResetModal(false);
+      setIsRecording(false);
+      startRecording();
+    });
+  };
+
+  const saveEmoji = async () => {
+    // Get user's emojiId
+    const uri = recording.getURI();
+    try {
+      // Create a directory containing emojiID's
+      const dirStatus = await FileSystem.getInfoAsync(
+        FileSystem.documentDirectory + "/emojis"
+      );
+
+      let fileUri =
+        FileSystem.documentDirectory +
+        "/emojis/" +
+        `${filename.trim().split(" ").join("-")}_${handleDate}.json`;
+      if (dirStatus.exists) {
+        // Write emojiID into new file
+        const res = await FileSystem.writeAsStringAsync(
+          fileUri,
+          `{"emojiID": ${emojiId}}`,
+          {
+            encoding: FileSystem.EncodingType.UTF8,
+          }
+        );
+
+        // Confirm emojiID is saved in user's device
+        const fileRes = await FileSystem.readAsStringAsync(fileUri, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+      } else {
+        // Create the directory
+        const newDir = await FileSystem.makeDirectoryAsync(
+          FileSystem.documentDirectory + "/emojis"
+        );
+
+        // Write audio string into new file
+        const res = await FileSystem.writeAsStringAsync(
+          fileUri,
+          `{"emojiID": ${emojiId}}`,
+          {
+            encoding: FileSystem.EncodingType.UTF8,
+          }
+        );
+      }
+
+      // Confirm file is saved in user's device
+      const fileRes = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      // View all recorded audio logs
+      const dir = await FileSystem.readDirectoryAsync(
+        FileSystem.documentDirectory + "/emojis"
+      );
+      console.log(emojiId);
       console.log(dir);
       console.log(fileRes);
 
       if (fileRes) {
-        setShowModal(false);
+        storeEmojiId(null);
         setFilename("");
-        // recording = null;
+        recording = undefined;
+        setIsRecording(false);
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const showModalOrEmoji = () => {
+    if (recording) {
+      return (
+        <Image
+          source={emotions.assets[emojiId]}
+          style={{
+            width: 200,
+            height: 200,
+          }}
+        />
+      );
+    } else {
+      return <Microphone />;
     }
   };
 
@@ -248,6 +390,15 @@ const HomeScreen = ({ navigation }) => {
     return () => intervalId && clearInterval(intervalId);
   }, [startTimer]);
 
+  // Set current screen on screen load
+  useEffect(() => {
+    dispatch(setScreen("home"));
+
+    return () => {
+      dispatch(resetScreen());
+    };
+  }, [currentScreen]);
+
   return (
     <ImageBackground
       source={require("../assets/nav/background.png")}
@@ -256,7 +407,11 @@ const HomeScreen = ({ navigation }) => {
       <View style={tw`flex-1`}>
         {/* Modal for user's audio title */}
         <StatusBar style="light" translucent={false} />
-        <Modal animationType="slide" visible={showModal} transparent>
+        <NavTop type="Back" navigation={navigation} location="emoji" />
+
+        {/* Dynamically render different modals */}
+        {/* Save Modal */}
+        <Modal animationType="slide" visible={showSaveModal} transparent>
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <View
               style={{
@@ -279,10 +434,22 @@ const HomeScreen = ({ navigation }) => {
                   padding: 10,
                 }}
               >
-                <Text style={{ fontSize: 20, marginBottom: 20 }}>
+                <Text
+                  style={{
+                    fontSize: 20,
+                    marginBottom: 20,
+                    fontFamily: "inter",
+                  }}
+                >
                   Let's Name It
                 </Text>
-                <Text>What would you like to name this audio log?</Text>
+                <Text
+                  style={{
+                    fontFamily: "inter",
+                  }}
+                >
+                  What would you like to name this audio log?
+                </Text>
                 <TextInput
                   placeholder="What a day"
                   value={filename}
@@ -295,6 +462,7 @@ const HomeScreen = ({ navigation }) => {
                     marginTop: 10,
                     borderRadius: 5,
                     padding: 10,
+                    fontFamily: "inter",
                   }}
                 ></TextInput>
                 <View
@@ -304,7 +472,7 @@ const HomeScreen = ({ navigation }) => {
                     justifyContent: "space-between",
                   }}
                 >
-                  <TouchableOpacity onPress={() => setShowModal(false)}>
+                  <TouchableOpacity onPress={() => setShowSaveModal(false)}>
                     <Text
                       style={{
                         padding: 10,
@@ -313,6 +481,7 @@ const HomeScreen = ({ navigation }) => {
                         backgroundColor: "transparent",
                         width: 80,
                         textAlign: "center",
+                        fontFamily: "inter",
                       }}
                     >
                       Cancel
@@ -320,19 +489,196 @@ const HomeScreen = ({ navigation }) => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     disabled={filename.length < 5 ? true : false}
-                    onPress={() => saveRecording()}
+                    onPress={() => {
+                      try {
+                        saveRecording();
+                        saveEmoji();
+                      } catch (error) {
+                        console.log(error);
+                      }
+                    }}
                   >
                     <Text
                       style={{
                         padding: 10,
                         borderRadius: 5,
                         marginTop: 10,
-                        backgroundColor: "lightblue",
+                        backgroundColor: "#3131C9",
+                        color: "white",
                         width: 70,
                         textAlign: "center",
+                        fontFamily: "inter",
                       }}
                     >
                       Done
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Delete Modal */}
+        <Modal animationType="slide" visible={showDeleteModal} transparent>
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                width: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <View
+                style={{
+                  maxWidth: 300,
+                  backgroundColor: "white",
+                  borderRadius: 10,
+                  shadowColor: "rgba(0, 0, 0, 0.7)",
+                  shadowOffset: 10,
+                  elevation: 10,
+                  shadowRadius: 10,
+                  padding: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 20,
+                    marginBottom: 20,
+                    fontFamily: "inter",
+                  }}
+                >
+                  Delete log
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "inter",
+                  }}
+                >
+                  Are you sure you want to delete this audio log?
+                </Text>
+                <View
+                  style={{
+                    marginTop: 10,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <TouchableOpacity onPress={() => setShowDeleteModal(false)}>
+                    <Text
+                      style={{
+                        padding: 10,
+                        borderRadius: 5,
+                        marginTop: 10,
+                        backgroundColor: "transparent",
+                        width: 80,
+                        textAlign: "center",
+                        fontFamily: "inter",
+                      }}
+                    >
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteRecording()}>
+                    <Text
+                      style={{
+                        padding: 10,
+                        borderRadius: 5,
+                        marginTop: 10,
+                        backgroundColor: "red",
+                        color: "white",
+                        width: 70,
+                        textAlign: "center",
+                        fontFamily: "inter",
+                      }}
+                    >
+                      Yes
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Reset Modal */}
+        <Modal animationType="slide" visible={showResetModal} transparent>
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                width: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <View
+                style={{
+                  maxWidth: 300,
+                  backgroundColor: "white",
+                  borderRadius: 10,
+                  shadowColor: "rgba(0, 0, 0, 0.7)",
+                  shadowOffset: 10,
+                  elevation: 10,
+                  shadowRadius: 10,
+                  padding: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 20,
+                    marginBottom: 20,
+                    fontFamily: "inter",
+                  }}
+                >
+                  Reset recording
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "inter",
+                  }}
+                >
+                  Are you sure you want to reset this recording?
+                </Text>
+                <View
+                  style={{
+                    marginTop: 10,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <TouchableOpacity onPress={() => setShowResetModal(false)}>
+                    <Text
+                      style={{
+                        padding: 10,
+                        borderRadius: 5,
+                        marginTop: 10,
+                        backgroundColor: "transparent",
+                        width: 80,
+                        textAlign: "center",
+                        fontFamily: "inter",
+                      }}
+                    >
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => resetRecording()}>
+                    <Text
+                      style={{
+                        padding: 10,
+                        borderRadius: 5,
+                        marginTop: 10,
+                        backgroundColor: "#3131C9",
+                        color: "white",
+                        width: 70,
+                        textAlign: "center",
+                        fontFamily: "inter",
+                      }}
+                    >
+                      Reset
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -346,36 +692,117 @@ const HomeScreen = ({ navigation }) => {
           {/* header image and text container */}
           <HeaderHome signOut={signOutHandler} />
 
-          <View style={tw` w-full mt-10`}>
-            <Text
-              style={{
-                fontFamily: "inter",
-                fontSize: 20,
-                marginBottom: 5,
-              }}
-            >
-              Hi {auth()._user.displayName.split(" ")[0]}!
-            </Text>
+          {!recording && (
+            <View style={tw` w-full mt-10`}>
+              <Text
+                style={{
+                  fontFamily: "inter",
+                  fontSize: 20,
+                  marginBottom: 5,
+                }}
+              >
+                Hi {auth()._user.displayName.split(" ")[0]}!
+              </Text>
 
-            {/* <Text style={tw`text-gray-500 font-semibold text-base`}> */}
-            <Text
+              {/* <Text style={tw`text-gray-500 font-semibold text-base`}> */}
+              <Text
+                style={{
+                  fontFamily: "titan",
+                  fontSize: 40,
+                  width: "100%",
+                  color: "#3131C9",
+                }}
+              >
+                What's on your mind today?
+              </Text>
+            </View>
+          )}
+          {recording && isRecording && (
+            <Image
+              source={require("../assets/homeScreen/kite.png")}
+              style={{ width: 280, height: 280 }}
+            />
+          )}
+          {recording && recording._uri && !isRecording && (
+            <View
               style={{
-                fontFamily: "titan",
-                fontSize: 40,
+                height: 138,
                 width: "100%",
-                color: "#3131C9",
+                backgroundColor: "#3131C9",
+                marginTop: "10%",
+                borderRadius: 10,
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexDirection: "row",
+                paddingHorizontal: 5,
               }}
             >
-              What's on your mind today?
-            </Text>
-          </View>
-
-          {/* <Fontisto
-            style={tw` mt-6 text-center`}
-            name="smiley"
-            size={80}
-            color="black"
-          /> */}
+              <TouchableOpacity onPress={() => playRecording()}>
+                <View
+                  style={tw.style(
+                    "rounded-full",
+                    "flex-row",
+                    "justify-center",
+                    "items-center",
+                    {
+                      width: 40,
+                      height: 40,
+                      marginRight: 5,
+                      backgroundColor: "rgba(255, 255, 255, 1)",
+                      position: "relative",
+                      borderRadius: 20,
+                    }
+                  )}
+                >
+                  {isPlaying ? (
+                    <SmallPause
+                      style={{
+                        width: 30,
+                        position: "absolute",
+                      }}
+                    />
+                  ) : (
+                    <SmallPlay
+                      style={{
+                        width: 30,
+                        position: "absolute",
+                      }}
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
+              <SoundWave
+                style={{
+                  flex: 1,
+                }}
+              />
+            </View>
+          )}
+          {recording && recording._uri && !isRecording && (
+            <View
+              style={{
+                marginTop: 10,
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+              }}
+            >
+              <Pencil style={{ marginRight: 10 }} />
+              <Text
+                style={{
+                  fontFamily: "inter",
+                  fontWeight: "bold",
+                  color: "#3131C9",
+                  fontSize: 20,
+                  textAlign: "center",
+                  flex: 1,
+                }}
+                numberOfLines={1}
+              >
+                {handleDate}
+              </Text>
+            </View>
+          )}
 
           {/* recording timer */}
           {isRecording && (
@@ -406,9 +833,15 @@ const HomeScreen = ({ navigation }) => {
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-around",
+              marginBottom: 10,
             }}
           >
-            <TouchableOpacity style={tw` self-center mt-10`}>
+            <TouchableOpacity
+              style={tw` self-center mt-10`}
+              onPress={() => {
+                recordingIsPaused ? continueRecording() : pauseRecording();
+              }}
+            >
               <View
                 style={tw.style(
                   "rounded-full",
@@ -416,8 +849,8 @@ const HomeScreen = ({ navigation }) => {
                   "justify-center",
                   "items-center",
                   {
-                    width: 100,
-                    height: 100,
+                    width: 80,
+                    height: 80,
                     borderColor: "rgba(0, 0, 0, 0.25)",
                     borderWidth: isRecording ? 2 : 0,
                     borderStyle: "solid",
@@ -425,7 +858,8 @@ const HomeScreen = ({ navigation }) => {
                   }
                 )}
               >
-                {isRecording && <Pause />}
+                {isRecording && recordingIsPaused && <Play />}
+                {isRecording && !recordingIsPaused && <Pause />}
               </View>
             </TouchableOpacity>
 
@@ -443,18 +877,21 @@ const HomeScreen = ({ navigation }) => {
                     width: 100,
                     height: 100,
                     borderColor: "rgba(0, 0, 0, 0.25)",
-                    borderWidth: 2,
+                    borderWidth: !isRecording && recording ? 0 : 2,
                     borderStyle: "solid",
                     marginTop: 20,
                     marginHorizontal: 10,
                   }
                 )}
               >
-                {!isRecording ? <Microphone /> : <Stop />}
+                {!isRecording ? showModalOrEmoji() : <Stop />}
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={tw` self-center mt-10`}>
+            <TouchableOpacity
+              style={tw` self-center mt-10`}
+              onPress={() => setShowResetModal(true)}
+            >
               <View
                 style={tw.style(
                   "rounded-full",
@@ -462,8 +899,8 @@ const HomeScreen = ({ navigation }) => {
                   "justify-center",
                   "items-center",
                   {
-                    width: 100,
-                    height: 100,
+                    width: 80,
+                    height: 80,
                     borderColor: "rgba(0, 0, 0, 0.25)",
                     borderWidth: isRecording ? 2 : 0,
                     borderStyle: "solid",
@@ -481,11 +918,7 @@ const HomeScreen = ({ navigation }) => {
             <View
               style={tw`flex-row mt-6 self-center justify-around max-w-xs items-center justify-between m-3`}
             >
-              <TouchableOpacity
-                onPress={async () => {
-                  setShowModal(true);
-                }}
-              >
+              <TouchableOpacity onPress={() => setShowDeleteModal(true)}>
                 <View
                   style={tw.style(
                     "rounded-full",
@@ -496,7 +929,7 @@ const HomeScreen = ({ navigation }) => {
                       width: 60,
                       height: 60,
                       borderColor: "rgba(0, 0, 0, 0.25)",
-                      borderWidth: 1,
+                      borderWidth: 2,
                       marginHorizontal: 20,
                       borderStyle: "solid",
                       marginTop: 20,
@@ -521,7 +954,7 @@ const HomeScreen = ({ navigation }) => {
                 color="white"
               />
             </TouchableOpacity> */}
-              <TouchableOpacity onPress={() => playRecording()}>
+              {/* <TouchableOpacity onPress={() => playRecording()}>
                 <View
                   style={tw.style(
                     "rounded-full",
@@ -532,7 +965,7 @@ const HomeScreen = ({ navigation }) => {
                       width: 60,
                       height: 60,
                       borderColor: "rgba(0, 0, 0, 0.25)",
-                      borderWidth: 1,
+                      borderWidth: 2,
                       marginHorizontal: 20,
                       borderStyle: "solid",
                       marginTop: 20,
@@ -541,10 +974,13 @@ const HomeScreen = ({ navigation }) => {
                 >
                   <Play />
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <TouchableOpacity
-                onPress={() => soundObject && soundObject.pauseAsync()}
+                // onPress={() => soundObject && soundObject.pauseAsync()}
+                onPress={async () => {
+                  setShowSaveModal(true);
+                }}
               >
                 <View
                   style={tw.style(
@@ -556,7 +992,7 @@ const HomeScreen = ({ navigation }) => {
                       width: 60,
                       height: 60,
                       borderColor: "rgba(0, 0, 0, 0.25)",
-                      borderWidth: 1,
+                      borderWidth: 2,
                       marginHorizontal: 20,
                       borderStyle: "solid",
                       marginTop: 20,

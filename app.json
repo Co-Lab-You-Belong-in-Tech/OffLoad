@@ -14,8 +14,13 @@
     },
     "androidStatusBar": {
       "backgroundColor": "#3131C9",
-      "style": "dark",
+      "style": "light",
       "translucent": true
+    },
+    "androidNavigationBar": {
+      "visible": false,
+      "barStyle": "light",
+      "backgroundColor": "#3131C9"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
