@@ -493,6 +493,7 @@ const HomeScreen = ({ navigation }) => {
                       try {
                         saveRecording();
                         saveEmoji();
+                        navigation.navigate("calendar");
                       } catch (error) {
                         console.log(error);
                       }

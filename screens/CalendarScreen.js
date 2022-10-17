@@ -71,19 +71,19 @@ const emojiData = async () => {
   }
 };
 
-// const dummyData = [
-//   { id: 1, mood: "☺️", date: new Date(2022, 8, 2) },
-//   { id: 2, mood: "☺️", date: new Date(2022, 11, 2) },
-//   { id: 3, mood: "☺️", date: new Date(2022, 9, 2) },
-//   { id: 4, mood: "😂", date: new Date(2022, 9, 4) },
-//   { id: 5, mood: "😔", date: new Date(2022, 9, 5) },
-//   { id: 6, mood: "😡", date: new Date(2022, 9, 6) },
-//   { id: 7, mood: "😁", date: new Date(2022, 9, 7) },
-//   { id: 8, mood: "😁", date: new Date(2022, 9, 18) },
-//   { id: 9, mood: "🥶", date: new Date(2022, 3, 19) },
-//   { id: 10, mood: "😤", date: new Date(2022, 6, 24) },
-//   { id: 11, mood: "😤", date: new Date(2022, 9, 9) },
-// ];
+const dummyData = [
+  { id: 1, mood: "☺️", date: new Date(2022, 8, 2) },
+  { id: 2, mood: "☺️", date: new Date(2022, 11, 2) },
+  { id: 3, mood: "☺️", date: new Date(2022, 9, 2) },
+  { id: 4, mood: "😂", date: new Date(2022, 9, 4) },
+  { id: 5, mood: "😔", date: new Date(2022, 9, 5) },
+  { id: 6, mood: "😡", date: new Date(2022, 9, 6) },
+  { id: 7, mood: "😁", date: new Date(2022, 9, 7) },
+  { id: 8, mood: "😁", date: new Date(2022, 9, 18) },
+  { id: 9, mood: "🥶", date: new Date(2022, 3, 19) },
+  { id: 10, mood: "😤", date: new Date(2022, 6, 24) },
+  { id: 11, mood: "😤", date: new Date(2022, 9, 9) },
+];
 
 const months = [
   "January",
