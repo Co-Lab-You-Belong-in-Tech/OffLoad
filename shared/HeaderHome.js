@@ -6,7 +6,7 @@ import greetings from "../helpers/greeting";
 
 const HeaderHome = ({ signOut }) => {
   return (
-    <View style={tw`w-full flex-row justify-between items-center  mt-3 `}>
+    <View style={tw`w-full flex-row justify-between items-center  mt-3 px-4`}>
       <Text
         style={{
           fontFamily: "inter",

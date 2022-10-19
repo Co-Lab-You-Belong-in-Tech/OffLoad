@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import NavTop from "../shared/NavTop";
 import tw from "tailwind-react-native-classnames";
 import { emotions } from "../assets/emoticons/emotions";
-import { storeEmojiId } from "../store/appSlice";
+import { resetEmojiId, storeEmojiId } from "../store/appSlice";
 import { useDispatch } from "react-redux";
 
 export default function EmojiScreen({ navigation }) {
@@ -125,14 +125,19 @@ export default function EmojiScreen({ navigation }) {
                 paddingHorizontal: 10,
               }}
             >
-              <TouchableOpacity onPress={() => setEmojiId(null)}>
+              <TouchableOpacity
+                onPress={() => {
+                  setEmojiId(null);
+                  dispatch(resetEmojiId());
+                }}
+              >
                 <Text
                   style={{
                     padding: 10,
                     borderRadius: 10,
                     fontFamily: "inter",
                     backgroundColor: "transparent",
-                    fontSize: 18,
+                    fontSize: 15,
                     color: "rgba(0, 0, 0, 0.8)",
                   }}
                 >
@@ -151,7 +156,7 @@ export default function EmojiScreen({ navigation }) {
                     borderRadius: 10,
                     fontFamily: "inter",
                     backgroundColor: "#3131C9",
-                    fontSize: 18,
+                    fontSize: 15,
                     color: "rgba(255, 255, 255, 0.8)",
                   }}
                 >

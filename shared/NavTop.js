@@ -2,8 +2,10 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 import React from "react";
 import tw from "tailwind-react-native-classnames";
+import { useSelector } from "react-redux";
 
-const NavTop = ({ navigation, type, times, location }) => {
+const NavTop = ({ navigation, type, times, location, setShowMic }) => {
+  const { currentScreen } = useSelector((state) => state.app);
   const figureTextOut = () => {
     if (type === "Next") return "Next";
     if (type === "Skip") return "Skip";
@@ -24,9 +26,10 @@ const NavTop = ({ navigation, type, times, location }) => {
       })}
     >
       <TouchableOpacity
-        onPress={() =>
-          times ? navigation.goBack() : navigation.navigate(location)
-        }
+        onPress={() => {
+          currentScreen === "home" && setShowMic(false);
+          times ? navigation.goBack() : navigation.navigate(location);
+        }}
       >
         {type === "Next" || type === "Skip" ? (
           <Text>
@@ -37,16 +40,16 @@ const NavTop = ({ navigation, type, times, location }) => {
                 alignItems: "center",
                 fontFamily: "inter",
                 color: "#3131C9",
-                fontSize: 20,
+                fontSize: 15,
               }}
             >
               {figureTextOut()}
             </Text>
-            <Entypo name="chevron-thin-right" size={20} color="#3131C9" />
+            <Entypo name="chevron-thin-right" size={15} color="#3131C9" />
           </Text>
         ) : (
           <Text>
-            <Entypo name="chevron-thin-left" size={20} color="#3131C9" />
+            <Entypo name="chevron-thin-left" size={15} color="#3131C9" />
             <Text
               style={{
                 display: "flex",
@@ -54,7 +57,7 @@ const NavTop = ({ navigation, type, times, location }) => {
                 alignItems: "center",
                 fontFamily: "inter",
                 color: "#3131C9",
-                fontSize: 20,
+                fontSize: 15,
               }}
             >
               {figureTextOut()}

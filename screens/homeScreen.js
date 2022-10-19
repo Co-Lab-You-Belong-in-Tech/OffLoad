@@ -34,16 +34,19 @@ import SmallPause from "../assets/homeScreen/smallPause.svg";
 import Save from "../assets/homeScreen/Save.svg";
 import Delete from "../assets/homeScreen/Remove.svg";
 import SoundWave from "../assets/homeScreen/soundwave.svg";
+import BlueSoundWave from "../assets/homeScreen/soundwave-blue.svg";
 import Pencil from "../assets/homeScreen/Pencil.svg";
 
 import { useDispatch, useSelector } from "react-redux";
 import { resetScreen, setScreen, storeEmojiId } from "../store/appSlice";
 import { emotions } from "../assets/emoticons/emotions";
 import { store } from "../store/store";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 let recording;
 let soundObject;
 let intervalId;
+let audioIntervalId;
 const timing = 1000;
 
 const HomeScreen = ({ navigation }) => {
@@ -66,6 +69,10 @@ const HomeScreen = ({ navigation }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [recordingIsPaused, setRecordingIsPaused] = useState(false);
+  const [showMic, setShowMic] = useState(true);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [lengthOfAudio, setLengthOfAudio] = useState(null);
+  const [audioSeek, setAudioSeek] = useState(0);
 
   // Memoized timingInterval to avoid unnecessary re-renders
   const timingInterval = useCallback(() => {
@@ -73,6 +80,17 @@ const HomeScreen = ({ navigation }) => {
       setDurationMillis((prev) => prev + timing);
     }, timing);
   }, []);
+
+  const audioTimingInterval = useCallback(
+    (type) => {
+      if (type === "sound") {
+        audioIntervalId = setInterval(() => {
+          setAudioSeek((prev) => prev + timing);
+        }, timing);
+      }
+    },
+    [soundObject]
+  );
 
   const handleDate = useMemo(() => {
     let str = moment().format("MMMM Do YYYY, h:mm:ss a");
@@ -83,11 +101,48 @@ const HomeScreen = ({ navigation }) => {
     }
   }, [recording]);
 
+  const emojiDate = useMemo(() => {
+    return new Date();
+  }, [recording]);
+
+  const placeEmoji = (originData, data) => {
+    let matchFound = false;
+    let newArray = [];
+
+    for (let i = 0; i < originData.length; i++) {
+      let emojiData = originData[i];
+
+      if (Array.isArray(emojiData)) {
+        if (
+          new Date(emojiData[0]["date"]).getDate() ===
+            new Date(data["date"]).getDate() &&
+          new Date(emojiData[0]["date"]).getMonth() ===
+            new Date(data["date"]).getMonth()
+        ) {
+          matchFound = true;
+          newArray.push([data, ...emojiData]);
+        }
+      } else if (
+        new Date(emojiData["date"]).getDate() ===
+          new Date(data["date"]).getDate() &&
+        new Date(emojiData["date"]).getMonth() ===
+          new Date(data["date"]).getMonth()
+      ) {
+        matchFound = true;
+        newArray.push([data, emojiData]);
+      } else {
+        newArray.push(emojiData);
+      }
+    }
+    !matchFound && newArray.unshift(data);
+    return newArray;
+  };
+
   // Helper function for rendering countdown timer
   const showTime = (type, mill) => {
     if (type === "sec") {
       let secValue = 0;
-      secValue = (mill / 1000) % 60;
+      secValue = parseInt((mill / 1000) % 60);
       return secValue.toString().length < 2 ? "0" + "" + secValue : secValue;
     }
     if (type === "min") {
@@ -111,6 +166,7 @@ const HomeScreen = ({ navigation }) => {
   const _onPlaybackStatusUpdate = (playbackStatus) => {
     if (!playbackStatus.isLoaded) {
       // Update your UI for the unloaded state
+      audioIntervalId && clearInterval(audioIntervalId);
       if (playbackStatus.error) {
         console.log(
           `Encountered a fatal error during playback: ${playbackStatus.error}`
@@ -119,12 +175,13 @@ const HomeScreen = ({ navigation }) => {
       }
     } else {
       // Update your UI for the loaded state
-
+      setLengthOfAudio(playbackStatus.durationMillis);
       if (playbackStatus.isPlaying) {
         // Update your UI for the playing state
         setIsPlaying(true);
       } else {
         // Update your UI for the paused state
+        audioIntervalId && clearInterval(audioIntervalId);
         setIsPlaying(false);
       }
 
@@ -134,7 +191,9 @@ const HomeScreen = ({ navigation }) => {
 
       if (playbackStatus.didJustFinish && !playbackStatus.isLooping) {
         // The player has just finished playing and will stop. Maybe you want to play something else?
+        clearInterval(audioIntervalId);
         soundObject = null;
+        setAudioSeek(0);
       }
     }
   };
@@ -145,13 +204,14 @@ const HomeScreen = ({ navigation }) => {
 
     try {
       console.log("Requesting permissions..");
+      setShowMic(false);
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
-      setStartTimer(true); // start timer
       setIsRecording(true); // update recording status
+      setStartTimer(true); // start timer
       console.log("Starting recording..");
       await recording.prepareToRecordAsync(
         Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
@@ -171,6 +231,10 @@ const HomeScreen = ({ navigation }) => {
     setIsRecording(false); // update recording status
 
     const uri = recording.getURI(); // get audio file location on user's device
+    recording.getStatusAsync().then((result) => {
+      setLengthOfAudio(result.durationMillis);
+      setShowEmoji(true);
+    });
     console.log("Recording stopped and stored at");
     console.log(uri);
   };
@@ -178,7 +242,8 @@ const HomeScreen = ({ navigation }) => {
   const playRecording = async () => {
     // If there is an audio file and it is paused, play it
     if (soundObject && soundObject !== null) {
-      return soundObject.playAsync();
+      soundObject.playAsync();
+      return audioTimingInterval("sound");
     }
 
     // Otherwise, create a Audio.Sound instance
@@ -194,6 +259,20 @@ const HomeScreen = ({ navigation }) => {
 
       console.log("Playing Sound");
       await soundObject.playAsync();
+      return audioTimingInterval("sound");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const pauseSound = async () => {
+    // If user is recording, pause it
+    try {
+      if (soundObject && (soundObject !== null || soundObject !== undefined)) {
+        // setStartTimer(false);
+        // setRecordingIsPaused(true);
+        return soundObject.pauseAsync();
+      }
     } catch (error) {
       console.log(error);
     }
@@ -274,6 +353,8 @@ const HomeScreen = ({ navigation }) => {
         setFilename("");
         recording = undefined;
         setIsRecording(false);
+        setShowEmoji(false);
+        setShowMic(true);
       }
     } catch (error) {
       console.log(error);
@@ -284,6 +365,8 @@ const HomeScreen = ({ navigation }) => {
     setShowDeleteModal(false);
     recording = undefined;
     setIsRecording(false);
+    setShowEmoji(false);
+    setShowMic(true);
   };
 
   const resetRecording = async () => {
@@ -298,58 +381,45 @@ const HomeScreen = ({ navigation }) => {
 
   const saveEmoji = async () => {
     // Get user's emojiId
-    const uri = recording.getURI();
     try {
       // Create a directory containing emojiID's
+      if (emojiId === null) return;
       const dirStatus = await FileSystem.getInfoAsync(
-        FileSystem.documentDirectory + "/emojis"
+        FileSystem.documentDirectory + "/emojis/moods.json"
       );
 
-      let fileUri =
-        FileSystem.documentDirectory +
-        "/emojis/" +
-        `${filename.trim().split(" ").join("-")}_${handleDate}.json`;
+      let fileUri = FileSystem.documentDirectory + "/emojis/moods.json";
       if (dirStatus.exists) {
-        // Write emojiID into new file
+        // Write emoji object into new file
+        const existingData = await FileSystem.readAsStringAsync(fileUri);
+        let newParsedData = [];
+        const parsedData = JSON.parse(existingData);
+        const newMood = { date: emojiDate, emojiId: emojiId };
+
+        const transformedArray = placeEmoji(parsedData, newMood);
+        // const dataToInsert = parsedData.unshift(newMood);
+
         const res = await FileSystem.writeAsStringAsync(
           fileUri,
-          `{"emojiID": ${emojiId}}`,
-          {
-            encoding: FileSystem.EncodingType.UTF8,
-          }
+          JSON.stringify(transformedArray)
         );
-
-        // Confirm emojiID is saved in user's device
-        const fileRes = await FileSystem.readAsStringAsync(fileUri, {
-          encoding: FileSystem.EncodingType.UTF8,
-        });
       } else {
-        // Create the directory
+        // Create the emojis directory
         const newDir = await FileSystem.makeDirectoryAsync(
           FileSystem.documentDirectory + "/emojis"
         );
 
-        // Write audio string into new file
-        const res = await FileSystem.writeAsStringAsync(
-          fileUri,
-          `{"emojiID": ${emojiId}}`,
-          {
-            encoding: FileSystem.EncodingType.UTF8,
-          }
-        );
+        // Write emoji object into new file
+        const mood = JSON.stringify([{ emojiId: emojiId, date: emojiDate }]);
+        const res = await FileSystem.writeAsStringAsync(fileUri, mood);
       }
 
       // Confirm file is saved in user's device
-      const fileRes = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
-      // View all recorded audio logs
+      const fileRes = await FileSystem.readAsStringAsync(fileUri);
+      // View all emoji objects
       const dir = await FileSystem.readDirectoryAsync(
         FileSystem.documentDirectory + "/emojis"
       );
-      console.log(emojiId);
-      console.log(dir);
-      console.log(fileRes);
 
       if (fileRes) {
         storeEmojiId(null);
@@ -359,22 +429,6 @@ const HomeScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  const showModalOrEmoji = () => {
-    if (recording) {
-      return (
-        <Image
-          source={emotions.assets[emojiId]}
-          style={{
-            width: 200,
-            height: 200,
-          }}
-        />
-      );
-    } else {
-      return <Microphone />;
     }
   };
 
@@ -399,346 +453,376 @@ const HomeScreen = ({ navigation }) => {
     };
   }, [currentScreen]);
 
+  // Dynamically display mic
+  useEffect(() => {
+    recording && setShowMic(false);
+    if (recording) {
+      setShowEmoji(true);
+      recording.getStatusAsync().then((result) => {
+        setLengthOfAudio(result.durationMillis);
+      });
+    }
+  }, []);
+
   return (
-    <ImageBackground
-      source={require("../assets/nav/background.png")}
-      style={{ width: "100%", height: "100%", flex: 1, resizeMode: "contain" }}
-    >
-      <View style={tw`flex-1`}>
-        {/* Modal for user's audio title */}
-        <StatusBar style="light" translucent={false} />
-        <NavTop type="Back" navigation={navigation} location="emoji" />
-
-        {/* Dynamically render different modals */}
-        {/* Save Modal */}
-        <Modal animationType="slide" visible={showSaveModal} transparent>
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-                width: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <View
-                style={{
-                  maxWidth: 300,
-                  backgroundColor: "white",
-                  borderRadius: 10,
-                  shadowColor: "rgba(0, 0, 0, 0.7)",
-                  shadowOffset: 10,
-                  elevation: 10,
-                  shadowRadius: 10,
-                  padding: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 20,
-                    marginBottom: 20,
-                    fontFamily: "inter",
-                  }}
-                >
-                  Let's Name It
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "inter",
-                  }}
-                >
-                  What would you like to name this audio log?
-                </Text>
-                <TextInput
-                  placeholder="What a day"
-                  value={filename}
-                  onChangeText={(value) => setFilename(value)}
-                  style={{
-                    height: 50,
-                    borderColor: "#bababa",
-                    borderStyle: "solid",
-                    borderWidth: 1,
-                    marginTop: 10,
-                    borderRadius: 5,
-                    padding: 10,
-                    fontFamily: "inter",
-                  }}
-                ></TextInput>
-                <View
-                  style={{
-                    marginTop: 10,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <TouchableOpacity onPress={() => setShowSaveModal(false)}>
-                    <Text
-                      style={{
-                        padding: 10,
-                        borderRadius: 5,
-                        marginTop: 10,
-                        backgroundColor: "transparent",
-                        width: 80,
-                        textAlign: "center",
-                        fontFamily: "inter",
-                      }}
-                    >
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    disabled={filename.length < 5 ? true : false}
-                    onPress={() => {
-                      try {
-                        saveRecording();
-                        saveEmoji();
-                        navigation.navigate("calendar");
-                      } catch (error) {
-                        console.log(error);
-                      }
-                    }}
-                  >
-                    <Text
-                      style={{
-                        padding: 10,
-                        borderRadius: 5,
-                        marginTop: 10,
-                        backgroundColor: "#3131C9",
-                        color: "white",
-                        width: 70,
-                        textAlign: "center",
-                        fontFamily: "inter",
-                      }}
-                    >
-                      Done
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-
-        {/* Delete Modal */}
-        <Modal animationType="slide" visible={showDeleteModal} transparent>
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-                width: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <View
-                style={{
-                  maxWidth: 300,
-                  backgroundColor: "white",
-                  borderRadius: 10,
-                  shadowColor: "rgba(0, 0, 0, 0.7)",
-                  shadowOffset: 10,
-                  elevation: 10,
-                  shadowRadius: 10,
-                  padding: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 20,
-                    marginBottom: 20,
-                    fontFamily: "inter",
-                  }}
-                >
-                  Delete log
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "inter",
-                  }}
-                >
-                  Are you sure you want to delete this audio log?
-                </Text>
-                <View
-                  style={{
-                    marginTop: 10,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <TouchableOpacity onPress={() => setShowDeleteModal(false)}>
-                    <Text
-                      style={{
-                        padding: 10,
-                        borderRadius: 5,
-                        marginTop: 10,
-                        backgroundColor: "transparent",
-                        width: 80,
-                        textAlign: "center",
-                        fontFamily: "inter",
-                      }}
-                    >
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => deleteRecording()}>
-                    <Text
-                      style={{
-                        padding: 10,
-                        borderRadius: 5,
-                        marginTop: 10,
-                        backgroundColor: "red",
-                        color: "white",
-                        width: 70,
-                        textAlign: "center",
-                        fontFamily: "inter",
-                      }}
-                    >
-                      Yes
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-
-        {/* Reset Modal */}
-        <Modal animationType="slide" visible={showResetModal} transparent>
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-                width: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <View
-                style={{
-                  maxWidth: 300,
-                  backgroundColor: "white",
-                  borderRadius: 10,
-                  shadowColor: "rgba(0, 0, 0, 0.7)",
-                  shadowOffset: 10,
-                  elevation: 10,
-                  shadowRadius: 10,
-                  padding: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 20,
-                    marginBottom: 20,
-                    fontFamily: "inter",
-                  }}
-                >
-                  Reset recording
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "inter",
-                  }}
-                >
-                  Are you sure you want to reset this recording?
-                </Text>
-                <View
-                  style={{
-                    marginTop: 10,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <TouchableOpacity onPress={() => setShowResetModal(false)}>
-                    <Text
-                      style={{
-                        padding: 10,
-                        borderRadius: 5,
-                        marginTop: 10,
-                        backgroundColor: "transparent",
-                        width: 80,
-                        textAlign: "center",
-                        fontFamily: "inter",
-                      }}
-                    >
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => resetRecording()}>
-                    <Text
-                      style={{
-                        padding: 10,
-                        borderRadius: 5,
-                        marginTop: 10,
-                        backgroundColor: "#3131C9",
-                        color: "white",
-                        width: 70,
-                        textAlign: "center",
-                        fontFamily: "inter",
-                      }}
-                    >
-                      Reset
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-
-        {/* Home Screen */}
-        <ScrollView style={tw` flex-1  p-3 px-4`}>
-          {/* header image and text container */}
-          <HeaderHome signOut={signOutHandler} />
-
-          {!recording && (
-            <View style={tw` w-full mt-10`}>
-              <Text
-                style={{
-                  fontFamily: "inter",
-                  fontSize: 20,
-                  marginBottom: 5,
-                }}
-              >
-                Hi {auth()._user.displayName.split(" ")[0]}!
-              </Text>
-
-              {/* <Text style={tw`text-gray-500 font-semibold text-base`}> */}
-              <Text
-                style={{
-                  fontFamily: "titan",
-                  fontSize: 40,
-                  width: "100%",
-                  color: "#3131C9",
-                }}
-              >
-                What's on your mind today?
-              </Text>
-            </View>
-          )}
-          {recording && isRecording && (
-            <Image
-              source={require("../assets/homeScreen/kite.png")}
-              style={{ width: 280, height: 280 }}
+    <SafeAreaView style={{ flex: 1 }}>
+      <ImageBackground
+        source={require("../assets/nav/background.png")}
+        style={{
+          width: "100%",
+          height: "100%",
+          flex: 1,
+          resizeMode: "contain",
+        }}
+      >
+        <View style={tw`flex-1`}>
+          {/* Modal for user's audio title */}
+          <StatusBar style="light" translucent={false} />
+          {!isRecording && (
+            <NavTop
+              type="Back"
+              navigation={navigation}
+              location="emoji"
+              setShowMic={setShowMic}
             />
           )}
-          {recording && recording._uri && !isRecording && (
-            <View
-              style={{
-                height: 138,
-                width: "100%",
-                backgroundColor: "#3131C9",
-                marginTop: "10%",
-                borderRadius: 10,
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexDirection: "row",
-                paddingHorizontal: 5,
-              }}
-            >
-              <TouchableOpacity onPress={() => playRecording()}>
+
+          {/* Dynamically render different modals */}
+          {/* Save Modal */}
+          <Modal animationType="slide" visible={showSaveModal} transparent>
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  width: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <View
+                  style={{
+                    maxWidth: 300,
+                    backgroundColor: "white",
+                    borderRadius: 10,
+                    shadowColor: "rgba(0, 0, 0, 0.7)",
+                    shadowOffset: 10,
+                    elevation: 10,
+                    shadowRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      marginBottom: 20,
+                      fontFamily: "inter",
+                    }}
+                  >
+                    Let's Name It
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "inter",
+                    }}
+                  >
+                    What would you like to name this audio log?
+                  </Text>
+                  <TextInput
+                    placeholder="What a day"
+                    value={filename}
+                    onChangeText={(value) => setFilename(value)}
+                    style={{
+                      height: 50,
+                      borderColor: "#bababa",
+                      borderStyle: "solid",
+                      borderWidth: 1,
+                      marginTop: 10,
+                      borderRadius: 5,
+                      padding: 10,
+                      fontFamily: "inter",
+                    }}
+                  ></TextInput>
+                  <View
+                    style={{
+                      marginTop: 10,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => setShowSaveModal(false)}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          borderRadius: 5,
+                          marginTop: 10,
+                          backgroundColor: "transparent",
+                          width: 80,
+                          textAlign: "center",
+                          fontFamily: "inter",
+                        }}
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      disabled={filename.length < 5 ? true : false}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        try {
+                          saveRecording()
+                            .then(() => {
+                              saveEmoji();
+                            })
+                            .then(() => {
+                              navigation.navigate("calendar");
+                            });
+                        } catch (error) {
+                          console.log(error);
+                        }
+                      }}
+                    >
+                      <Text
+                        style={{
+                          padding: 10,
+                          borderRadius: 5,
+                          marginTop: 10,
+                          backgroundColor: "#3131C9",
+                          color: "white",
+                          width: 70,
+                          textAlign: "center",
+                          fontFamily: "inter",
+                        }}
+                      >
+                        Done
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+
+          {/* Delete Modal */}
+          <Modal animationType="slide" visible={showDeleteModal} transparent>
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  width: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <View
+                  style={{
+                    maxWidth: 300,
+                    backgroundColor: "white",
+                    borderRadius: 10,
+                    shadowColor: "rgba(0, 0, 0, 0.7)",
+                    shadowOffset: 10,
+                    elevation: 10,
+                    shadowRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      marginBottom: 20,
+                      fontFamily: "inter",
+                    }}
+                  >
+                    Delete log
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "inter",
+                    }}
+                  >
+                    Are you sure you want to delete this audio log?
+                  </Text>
+                  <View
+                    style={{
+                      marginTop: 10,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => setShowDeleteModal(false)}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          borderRadius: 5,
+                          marginTop: 10,
+                          backgroundColor: "transparent",
+                          width: 80,
+                          textAlign: "center",
+                          fontFamily: "inter",
+                        }}
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => deleteRecording()}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          borderRadius: 5,
+                          marginTop: 10,
+                          backgroundColor: "red",
+                          color: "white",
+                          width: 70,
+                          textAlign: "center",
+                          fontFamily: "inter",
+                        }}
+                      >
+                        Yes
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+
+          {/* Reset Modal */}
+          <Modal animationType="slide" visible={showResetModal} transparent>
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  width: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <View
+                  style={{
+                    maxWidth: 300,
+                    backgroundColor: "white",
+                    borderRadius: 10,
+                    shadowColor: "rgba(0, 0, 0, 0.7)",
+                    shadowOffset: 10,
+                    elevation: 10,
+                    shadowRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      marginBottom: 20,
+                      fontFamily: "inter",
+                    }}
+                  >
+                    Reset recording
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "inter",
+                    }}
+                  >
+                    Are you sure you want to reset this recording?
+                  </Text>
+                  <View
+                    style={{
+                      marginTop: 10,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => setShowResetModal(false)}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          borderRadius: 5,
+                          marginTop: 10,
+                          backgroundColor: "transparent",
+                          width: 80,
+                          textAlign: "center",
+                          fontFamily: "inter",
+                        }}
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => resetRecording()}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          borderRadius: 5,
+                          marginTop: 10,
+                          backgroundColor: "#3131C9",
+                          color: "white",
+                          width: 70,
+                          textAlign: "center",
+                          fontFamily: "inter",
+                        }}
+                      >
+                        Reset
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+
+          {/* Home Screen */}
+          <ScrollView style={tw` flex-1`}>
+            {/* header image and text container */}
+            {<HeaderHome signOut={signOutHandler} />}
+
+            {!recording && (
+              <View style={tw` w-full mt-10 mx-4`}>
+                <Text
+                  style={{
+                    fontFamily: "inter",
+                    fontSize: 20,
+                    marginBottom: 5,
+                  }}
+                >
+                  Hi {auth()._user.displayName.split(" ")[0]}!
+                </Text>
+
+                {/* <Text style={tw`text-gray-500 font-semibold text-base`}> */}
+                <Text
+                  style={{
+                    fontFamily: "titan",
+                    fontSize: 40,
+                    width: "100%",
+                    color: "#3131C9",
+                  }}
+                >
+                  What's on your mind today?
+                </Text>
+              </View>
+            )}
+            {recording && isRecording && (
+              <Image
+                source={require("../assets/homeScreen/kite.png")}
+                style={{ width: 200, alignSelf: "center" }}
+              />
+            )}
+            {recording && recording._uri && !isRecording && (
+              <View
+                style={{
+                  height: 138,
+                  backgroundColor: "#3131C9",
+                  marginTop: "10%",
+                  borderRadius: 10,
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  paddingHorizontal: 5,
+                  marginHorizontal: 16,
+                  position: "relative",
+                }}
+              >
+                {/* Play/Pause button */}
                 <View
                   style={tw.style(
                     "rounded-full",
@@ -752,174 +836,141 @@ const HomeScreen = ({ navigation }) => {
                       backgroundColor: "rgba(255, 255, 255, 1)",
                       position: "relative",
                       borderRadius: 20,
+                      justifyContent: "center",
+                      alignItems: "center",
                     }
                   )}
                 >
                   {isPlaying ? (
-                    <SmallPause
-                      style={{
-                        width: 30,
-                        position: "absolute",
-                      }}
-                    />
+                    <TouchableOpacity>
+                      <SmallPause
+                        onPress={() => pauseSound()}
+                        style={{
+                          width: 30,
+                          alignSelf: "center",
+                        }}
+                      />
+                    </TouchableOpacity>
                   ) : (
-                    <SmallPlay
-                      style={{
-                        width: 30,
-                        position: "absolute",
-                      }}
-                    />
+                    <TouchableOpacity onPress={() => playRecording()}>
+                      <SmallPlay
+                        style={{
+                          width: 30,
+                          alignSelf: "center",
+                        }}
+                      />
+                    </TouchableOpacity>
                   )}
                 </View>
-              </TouchableOpacity>
-              <SoundWave
+                <SoundWave
+                  style={{
+                    flex: 1,
+                  }}
+                />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    position: "absolute",
+                    bottom: 10,
+                    left: 0,
+                    flex: 1,
+                    width: "100%",
+                    paddingLeft: 45,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      fontFamily: "inter",
+                      fontSize: 12,
+                    }}
+                  >
+                    {showTime("min", audioSeek)}:{showTime("sec", audioSeek)}
+                  </Text>
+                  <Text
+                    style={{
+                      color: "white",
+                      fontFamily: "inter",
+                      fontSize: 12,
+                    }}
+                  >
+                    {showTime("min", lengthOfAudio)}:
+                    {showTime("sec", lengthOfAudio)}
+                  </Text>
+                </View>
+              </View>
+            )}
+            {recording && recording._uri && !isRecording && (
+              <View
                 style={{
-                  flex: 1,
+                  marginTop: 10,
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  alignItems: "center",
+                  marginHorizontal: 16,
                 }}
-              />
-            </View>
-          )}
-          {recording && recording._uri && !isRecording && (
+              >
+                <Pencil style={{ marginRight: 10 }} />
+                <Text
+                  style={{
+                    fontFamily: "inter",
+                    fontWeight: "bold",
+                    color: "#3131C9",
+                    fontSize: 15,
+                    textAlign: "left",
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {handleDate}
+                </Text>
+              </View>
+            )}
+
+            {/* recording timer */}
+            {isRecording && (
+              <View style={tw`flex-row  justify-center mt-4 mx-4`}>
+                <Text
+                  style={{
+                    fontFamily: "inter",
+                    fontSize: 28,
+                  }}
+                >
+                  {showTime("min", durationMillis)}:
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "inter",
+                    fontSize: 28,
+                  }}
+                >
+                  {showTime("sec", durationMillis)}
+                </Text>
+              </View>
+            )}
+
+            {isRecording && (
+              <BlueSoundWave style={{ width: "100%", alignSelf: "center" }} />
+            )}
+
+            {/* mic container */}
             <View
               style={{
-                marginTop: 10,
                 flexDirection: "row",
-                justifyContent: "flex-start",
-                alignItems: "center",
+                alignItems: "flex-start",
+                justifyContent: "space-around",
+                marginBottom: 10,
+                marginHorizontal: 16,
               }}
             >
-              <Pencil style={{ marginRight: 10 }} />
-              <Text
-                style={{
-                  fontFamily: "inter",
-                  fontWeight: "bold",
-                  color: "#3131C9",
-                  fontSize: 20,
-                  textAlign: "center",
-                  flex: 1,
-                }}
-                numberOfLines={1}
-              >
-                {handleDate}
-              </Text>
-            </View>
-          )}
-
-          {/* recording timer */}
-          {isRecording && (
-            <View style={tw`flex-row  justify-center mt-4`}>
-              <Text
-                style={{
-                  fontFamily: "inter",
-                  fontSize: 32,
+              <TouchableOpacity
+                style={tw` self-center mt-10`}
+                onPress={() => {
+                  recordingIsPaused ? continueRecording() : pauseRecording();
                 }}
               >
-                {showTime("min", durationMillis)}:
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "inter",
-                  fontSize: 32,
-                }}
-              >
-                {showTime("sec", durationMillis)}
-              </Text>
-            </View>
-          )}
-
-          {/* mic container */}
-
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-around",
-              marginBottom: 10,
-            }}
-          >
-            <TouchableOpacity
-              style={tw` self-center mt-10`}
-              onPress={() => {
-                recordingIsPaused ? continueRecording() : pauseRecording();
-              }}
-            >
-              <View
-                style={tw.style(
-                  "rounded-full",
-                  "flex-row",
-                  "justify-center",
-                  "items-center",
-                  {
-                    width: 80,
-                    height: 80,
-                    borderColor: "rgba(0, 0, 0, 0.25)",
-                    borderWidth: isRecording ? 2 : 0,
-                    borderStyle: "solid",
-                    marginTop: 20,
-                  }
-                )}
-              >
-                {isRecording && recordingIsPaused && <Play />}
-                {isRecording && !recordingIsPaused && <Pause />}
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={isRecording ? stopRecording : startRecording}
-              style={tw` self-center mt-10`}
-            >
-              <View
-                style={tw.style(
-                  "rounded-full",
-                  "flex-row",
-                  "justify-center",
-                  "items-center",
-                  {
-                    width: 100,
-                    height: 100,
-                    borderColor: "rgba(0, 0, 0, 0.25)",
-                    borderWidth: !isRecording && recording ? 0 : 2,
-                    borderStyle: "solid",
-                    marginTop: 20,
-                    marginHorizontal: 10,
-                  }
-                )}
-              >
-                {!isRecording ? showModalOrEmoji() : <Stop />}
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={tw` self-center mt-10`}
-              onPress={() => setShowResetModal(true)}
-            >
-              <View
-                style={tw.style(
-                  "rounded-full",
-                  "flex-row",
-                  "justify-center",
-                  "items-center",
-                  {
-                    width: 80,
-                    height: 80,
-                    borderColor: "rgba(0, 0, 0, 0.25)",
-                    borderWidth: isRecording ? 2 : 0,
-                    borderStyle: "solid",
-                    marginTop: 20,
-                  }
-                )}
-              >
-                {isRecording && <Reset />}
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* display recorded audio */}
-          {recording && recording._uri && !isRecording && (
-            <View
-              style={tw`flex-row mt-6 self-center justify-around max-w-xs items-center justify-between m-3`}
-            >
-              <TouchableOpacity onPress={() => setShowDeleteModal(true)}>
                 <View
                   style={tw.style(
                     "rounded-full",
@@ -927,61 +978,23 @@ const HomeScreen = ({ navigation }) => {
                     "justify-center",
                     "items-center",
                     {
-                      width: 60,
-                      height: 60,
+                      width: 70,
+                      height: 70,
                       borderColor: "rgba(0, 0, 0, 0.25)",
-                      borderWidth: 2,
-                      marginHorizontal: 20,
+                      borderWidth: isRecording ? 2 : 0,
                       borderStyle: "solid",
-                      marginTop: 20,
+                      marginTop: 10,
                     }
                   )}
                 >
-                  <Delete />
+                  {isRecording && recordingIsPaused && <Play />}
+                  {isRecording && !recordingIsPaused && <Pause />}
                 </View>
               </TouchableOpacity>
-              {/* 
-            <TouchableOpacity style={tw`rounded-full p-3 bg-gray-400`}>
-              <Entypo
-                onPress={() => recordings.sound.playAsync()}
-                name="controller-play"
-                size={30}
-                color="white"
-              />
-              <Ionicons
-                onPress={() => recordings.sound.pauseAsync()}
-                name="pause-sharp"
-                size={30}
-                color="white"
-              />
-            </TouchableOpacity> */}
-              {/* <TouchableOpacity onPress={() => playRecording()}>
-                <View
-                  style={tw.style(
-                    "rounded-full",
-                    "flex-row",
-                    "justify-center",
-                    "items-center",
-                    {
-                      width: 60,
-                      height: 60,
-                      borderColor: "rgba(0, 0, 0, 0.25)",
-                      borderWidth: 2,
-                      marginHorizontal: 20,
-                      borderStyle: "solid",
-                      marginTop: 20,
-                    }
-                  )}
-                >
-                  <Play />
-                </View>
-              </TouchableOpacity> */}
 
               <TouchableOpacity
-                // onPress={() => soundObject && soundObject.pauseAsync()}
-                onPress={async () => {
-                  setShowSaveModal(true);
-                }}
+                onPress={isRecording ? stopRecording : startRecording}
+                style={tw` self-center mt-10`}
               >
                 <View
                   style={tw.style(
@@ -990,27 +1003,119 @@ const HomeScreen = ({ navigation }) => {
                     "justify-center",
                     "items-center",
                     {
-                      width: 60,
-                      height: 60,
+                      width: 80,
+                      height: 80,
                       borderColor: "rgba(0, 0, 0, 0.25)",
-                      borderWidth: 2,
-                      marginHorizontal: 20,
+                      borderWidth: !isRecording && recording ? 0 : 2,
                       borderStyle: "solid",
-                      marginTop: 20,
+                      marginTop: 10,
+                      marginHorizontal: 10,
                     }
                   )}
                 >
-                  <Save />
+                  {isRecording && <Stop />}
+                  {!isRecording && showMic && <Microphone />}
+                  {!isRecording && recording && showEmoji && (
+                    <Image
+                      source={emotions.assets[emojiId]}
+                      style={{
+                        width: 200,
+                        height: 200,
+                      }}
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={tw` self-center mt-10`}
+                onPress={() => setShowResetModal(true)}
+              >
+                <View
+                  style={tw.style(
+                    "rounded-full",
+                    "flex-row",
+                    "justify-center",
+                    "items-center",
+                    {
+                      width: 70,
+                      height: 70,
+                      borderColor: "rgba(0, 0, 0, 0.25)",
+                      borderWidth: isRecording ? 2 : 0,
+                      borderStyle: "solid",
+                      marginTop: 10,
+                    }
+                  )}
+                >
+                  {isRecording && <Reset width={50} />}
                 </View>
               </TouchableOpacity>
             </View>
-          )}
 
-          {/* end */}
-        </ScrollView>
-        <Nav navigation={navigation} />
-      </View>
-    </ImageBackground>
+            {/* display recorded audio */}
+            {recording && recording._uri && !isRecording && (
+              <View
+                style={tw`flex-row mt-6 self-center justify-around max-w-xs items-center justify-between m-3 mx-4`}
+              >
+                {/* Delete Icon */}
+                <TouchableOpacity onPress={() => setShowDeleteModal(true)}>
+                  <View
+                    style={tw.style(
+                      "rounded-full",
+                      "flex-row",
+                      "justify-center",
+                      "items-center",
+                      {
+                        width: 70,
+                        height: 70,
+                        borderColor: "rgba(0, 0, 0, 0.25)",
+                        borderWidth: 2,
+                        marginHorizontal: 20,
+                        borderStyle: "solid",
+                        marginTop: 20,
+                      }
+                    )}
+                  >
+                    <Delete />
+                  </View>
+                </TouchableOpacity>
+
+                {/* Save Icon */}
+                <TouchableOpacity
+                  // onPress={() => soundObject && soundObject.pauseAsync()}
+                  onPress={async () => {
+                    setShowSaveModal(true);
+                  }}
+                >
+                  <View
+                    style={tw.style(
+                      "rounded-full",
+                      "flex-row",
+                      "justify-center",
+                      "items-center",
+                      {
+                        width: 70,
+                        height: 70,
+                        borderColor: "rgba(0, 0, 0, 0.25)",
+                        borderWidth: 2,
+                        marginHorizontal: 20,
+                        borderStyle: "solid",
+                        marginTop: 20,
+                      }
+                    )}
+                  >
+                    <Save />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* end */}
+          </ScrollView>
+          <Nav navigation={navigation} />
+        </View>
+      </ImageBackground>
+    </SafeAreaView>
   );
 };
 

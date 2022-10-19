@@ -26,6 +26,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ImageBackground,
+  Image,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,56 +35,8 @@ import NavTop from "../shared/NavTop";
 import Nav from "../shared/Nav";
 import { useDispatch, useSelector } from "react-redux";
 import { resetScreen, setScreen } from "../store/appSlice";
-
-const emojiData = async () => {
-  const fileStatus = await FileSystem.getInfoAsync(
-    FileSystem.documentDirectory + "/emojis"
-  );
-
-  try {
-    if (fileStatus.exists) {
-      const emojisMemoryLocations = await FileSystem.readDirectoryAsync(
-        FileSystem.documentDirectory + "/emojis"
-      );
-      const newData = emojisMemoryLocations.map((location) => {
-        return FileSystem.documentDirectory + /emojis/ + `${location}`;
-      });
-
-      console.log(newData);
-      // let usableData = newData.map((data) =>
-      //   Promise.all(
-      //     FileSystem.readAsStringAsync(data, {
-      //       encoding: FileSystem.EncodingType.UTF8,
-      //     })
-      //   )
-      // );
-      let usableData = newData.map((data) =>
-        Promise.all(
-          FileSystem.readAsStringAsync(data, {
-            encoding: FileSystem.EncodingType.UTF8,
-          })
-        )
-      );
-      console.log(usableData);
-    }
-  } catch (errors) {
-    console.log(errors);
-  }
-};
-
-const dummyData = [
-  { id: 1, mood: "☺️", date: new Date(2022, 8, 2) },
-  { id: 2, mood: "☺️", date: new Date(2022, 11, 2) },
-  { id: 3, mood: "☺️", date: new Date(2022, 9, 2) },
-  { id: 4, mood: "😂", date: new Date(2022, 9, 4) },
-  { id: 5, mood: "😔", date: new Date(2022, 9, 5) },
-  { id: 6, mood: "😡", date: new Date(2022, 9, 6) },
-  { id: 7, mood: "😁", date: new Date(2022, 9, 7) },
-  { id: 8, mood: "😁", date: new Date(2022, 9, 18) },
-  { id: 9, mood: "🥶", date: new Date(2022, 3, 19) },
-  { id: 10, mood: "😤", date: new Date(2022, 6, 24) },
-  { id: 11, mood: "😤", date: new Date(2022, 9, 9) },
-];
+import { emotions } from "../assets/emoticons/emotions";
+import { AntDesign } from "@expo/vector-icons";
 
 const months = [
   "January",
@@ -113,6 +66,7 @@ const CalendarScreen = ({ navigation }) => {
 
   const [activeDate, setActiveDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
+  const [dummyData, setDummyData] = useState([]);
 
   const _onPress = useCallback(
     (item) => {
@@ -186,14 +140,41 @@ const CalendarScreen = ({ navigation }) => {
     (n) => {
       for (let mood of dummyData) {
         if (
-          activeDate.getFullYear() === mood.date.getFullYear() &&
-          activeDate.getMonth() === mood.date.getMonth() &&
-          mood.date.getDate() === n
-        )
-          return mood.mood;
+          Array.isArray(mood) &&
+          activeDate.getFullYear() === new Date(mood[0].date).getFullYear() &&
+          activeDate.getMonth() === new Date(mood[0].date).getMonth() &&
+          new Date(mood[0].date).getDate() === n
+        ) {
+          return (
+            <Image
+              source={emotions.assets[mood[0].emojiId]}
+              style={{
+                width: 70,
+                height: 70,
+                transform: [{ translateY: -17 }],
+              }}
+            />
+          );
+        }
+        if (
+          activeDate.getFullYear() === new Date(mood.date).getFullYear() &&
+          activeDate.getMonth() === new Date(mood.date).getMonth() &&
+          new Date(mood.date).getDate() === n
+        ) {
+          return (
+            <Image
+              source={emotions.assets[mood.emojiId]}
+              style={{
+                width: 70,
+                height: 70,
+                transform: [{ translateY: -17 }],
+              }}
+            />
+          );
+        }
       }
     },
-    [activeDate]
+    [activeDate, dummyData]
   );
 
   const generateMatrix = useCallback(() => {
@@ -248,6 +229,41 @@ const CalendarScreen = ({ navigation }) => {
     return matrix;
   }, [activeDate]);
 
+  const getEmojiData = useCallback(async () => {
+    const fileStatus = await FileSystem.getInfoAsync(
+      FileSystem.documentDirectory + "/emojis"
+    );
+
+    try {
+      if (fileStatus.exists) {
+        const userMoods = await FileSystem.readAsStringAsync(
+          FileSystem.documentDirectory + "/emojis/moods.json"
+        );
+        setDummyData(JSON.parse(userMoods));
+      }
+    } catch (errors) {
+      console.log(errors);
+    }
+  }, []);
+
+  // Reset emojis file || TO BE USED
+  const resetEmojis = async () => {
+    const { exists } = await FileSystem.getInfoAsync(
+      FileSystem.documentDirectory + "/emojis"
+    );
+    try {
+      if (exists) {
+        await FileSystem.deleteAsync(FileSystem.documentDirectory + "/emojis");
+      }
+      const checkAgain = await FileSystem.getInfoAsync(
+        FileSystem.documentDirectory + "/emojis"
+      );
+      console.log("checkAgain", checkAgain);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const matrix = generateMatrix();
 
   let rows = [];
@@ -265,7 +281,7 @@ const CalendarScreen = ({ navigation }) => {
               backgroundColor: item === -1 ? "transparent" : "#3131C9",
               borderRadius: rowIndex === 0 ? 0 : 10,
               marginHorizontal: rowIndex === 0 ? 0 : 3,
-              shadowColor: item !== -1 ? "#7e7e7e" : "#fff",
+              shadowColor: item !== -1 ? "#7e7e7e" : "transparent",
               shadowOffset: 1,
               shadowRadius: 3,
               elevation: 10,
@@ -287,7 +303,7 @@ const CalendarScreen = ({ navigation }) => {
               activeOpacity={item === -1 || isNaN(item) ? 1 : 0.7}
               onPress={() => {
                 _onPress(item);
-                setShowModal(true);
+                item !== -1 && !isNaN(item) && setShowModal(true);
               }}
             >
               <Text
@@ -300,28 +316,28 @@ const CalendarScreen = ({ navigation }) => {
                   backgroundColor:
                     item === new Date().getDate() &&
                     activeDate.getMonth() === new Date().getMonth()
-                      ? "#3131C19"
+                      ? "#3131C9"
                       : "transparent",
                   borderRadius: 10,
                   justifyContent: "center",
-                  marginVertical: 3,
+                  marginBottom: 3,
                   fontFamily: "inter",
-                  fontSize: 15,
+                  fontSize: rowIndex !== 0 ? 10 : 12,
                   fontWeight: "bold",
                 }}
               >
                 {item != -1 ? item : ""}
               </Text>
               {item != -1 && rowIndex !== 0 && (
-                <Text
+                <View
                   style={{
-                    fontSize: 20,
-                    textAlign: "center",
-                    fontFamily: "inter",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
+                    flex: 1,
                   }}
                 >
                   {item != -1 ? _findEmoji(item) : ""}
-                </Text>
+                </View>
               )}
             </TouchableOpacity>
           </View>
@@ -350,7 +366,7 @@ const CalendarScreen = ({ navigation }) => {
   // Set current screen on screen load
   useEffect(() => {
     dispatch(setScreen("calendar"));
-    emojiData();
+    // resetEmojis();
 
     return () => {
       dispatch(resetScreen());
@@ -363,13 +379,8 @@ const CalendarScreen = ({ navigation }) => {
         source={require("../assets/nav/background.png")}
         style={{ flex: 1 }}
       >
-        <NavTop
-          type="Back"
-          times={1}
-          navigation={navigation}
-          location="emoji"
-        />
-        <View style={{ flex: 1 }}>
+        <NavTop type="Back" times={1} navigation={navigation} />
+        <View style={{ flex: 1 }} onLayout={getEmojiData}>
           {/* Modal Content*/}
           <Modal visible={showModal} animationType="slide" transparent>
             <View
@@ -377,7 +388,9 @@ const CalendarScreen = ({ navigation }) => {
                 flex: 1,
                 width: "100%",
                 padding: 20,
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                borderTopLeftRadius: 10,
+                borderTopRightRadius: 10,
               }}
             >
               <View
@@ -400,7 +413,7 @@ const CalendarScreen = ({ navigation }) => {
                       color: "white",
                     }}
                   >
-                    {"❌"}
+                    <AntDesign name="close" size={24} color="#3131C9" />
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -412,12 +425,13 @@ const CalendarScreen = ({ navigation }) => {
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "flex-end",
+              maxHeight: 40,
             }}
           >
             <Text
               style={{
                 flexDirection: "row",
-                minHeight: 80,
+                minHeight: 40,
                 padding: 0,
                 paddingLeft: 15,
                 textAlignVertical: "bottom",

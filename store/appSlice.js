@@ -22,10 +22,13 @@ export const appSlice = createSlice({
     storeEmojiId: (state, action) => {
       state.emojiId = action.payload;
     },
+    resetEmojiId: (state) => {
+      state.emojiId = null;
+    },
   },
 });
 
-export const { setUser, setScreen, resetScreen, storeEmojiId } =
+export const { setUser, setScreen, resetScreen, storeEmojiId, resetEmojiId } =
   appSlice.actions;
 export const selectUser = (state) => state.app.user;
 
