@@ -9,6 +9,7 @@ import {
   ScrollView,
   Modal,
   ImageBackground,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useCallback, useState, useMemo } from "react";
 import tw from "tailwind-react-native-classnames";
@@ -38,7 +39,12 @@ import BlueSoundWave from "../assets/homeScreen/soundwave-blue.svg";
 import Pencil from "../assets/homeScreen/Pencil.svg";
 
 import { useDispatch, useSelector } from "react-redux";
-import { resetScreen, setScreen, storeEmojiId } from "../store/appSlice";
+import {
+  resetEmojiId,
+  resetScreen,
+  setScreen,
+  storeEmojiId,
+} from "../store/appSlice";
 import { emotions } from "../assets/emoticons/emotions";
 import { store } from "../store/store";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -73,6 +79,28 @@ const HomeScreen = ({ navigation }) => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [lengthOfAudio, setLengthOfAudio] = useState(null);
   const [audioSeek, setAudioSeek] = useState(0);
+  const [showActivityIndicator, setShowActivityIndicator] = useState(false);
+  const [activityText, setActivityText] = useState("");
+
+  // Reset audio logs file || TO BE USED
+  const resetAudioLogs = async () => {
+    const { exists } = await FileSystem.getInfoAsync(
+      FileSystem.documentDirectory + "/audio-logs"
+    );
+    try {
+      if (exists) {
+        await FileSystem.deleteAsync(
+          FileSystem.documentDirectory + "/audio-logs"
+        );
+      }
+      const checkAgain = await FileSystem.getInfoAsync(
+        FileSystem.documentDirectory + "/audio-logs"
+      );
+      console.log("checkAgain", checkAgain);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // Memoized timingInterval to avoid unnecessary re-renders
   const timingInterval = useCallback(() => {
@@ -114,22 +142,28 @@ const HomeScreen = ({ navigation }) => {
 
       if (Array.isArray(emojiData)) {
         if (
+          new Date(emojiData[0]["date"]).getFullYear() ===
+            new Date(data["date"]).getFullYear() &&
           new Date(emojiData[0]["date"]).getDate() ===
             new Date(data["date"]).getDate() &&
           new Date(emojiData[0]["date"]).getMonth() ===
             new Date(data["date"]).getMonth()
         ) {
-          matchFound = true;
           newArray.push([data, ...emojiData]);
+          matchFound = true;
+        } else {
+          newArray.push(emojiData);
         }
       } else if (
+        new Date(emojiData["date"]).getFullYear() ===
+          new Date(data["date"]).getFullYear() &&
         new Date(emojiData["date"]).getDate() ===
           new Date(data["date"]).getDate() &&
         new Date(emojiData["date"]).getMonth() ===
           new Date(data["date"]).getMonth()
       ) {
-        matchFound = true;
         newArray.push([data, emojiData]);
+        matchFound = true;
       } else {
         newArray.push(emojiData);
       }
@@ -314,7 +348,7 @@ const HomeScreen = ({ navigation }) => {
       let fileUri =
         FileSystem.documentDirectory +
         "/audio-logs/" +
-        `${filename.trim().split(" ").join("-")}_${handleDate}.txt`;
+        `${filename.trim()}⁙※⁂${lengthOfAudio}⁙※⁂${handleDate}.txt`;
       if (dirStatus.exists) {
         // Write audio string into new file
         const res = await FileSystem.writeAsStringAsync(fileUri, base64, {
@@ -422,7 +456,7 @@ const HomeScreen = ({ navigation }) => {
       );
 
       if (fileRes) {
-        storeEmojiId(null);
+        dispatch(resetEmojiId());
         setFilename("");
         recording = undefined;
         setIsRecording(false);
@@ -464,8 +498,45 @@ const HomeScreen = ({ navigation }) => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   resetAudioLogs();
+  // }, []);
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
+      {/* Activity Indicator*/}
+      {showActivityIndicator && (
+        <View
+          style={{
+            position: "absolute",
+            flex: 1,
+            width: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            height: "100%",
+            zIndex: 100000,
+            justifyContent: "center",
+          }}
+        >
+          <ActivityIndicator
+            animating={showActivityIndicator}
+            size="large"
+            color="#3131C9"
+          />
+          <View>
+            <Text
+              style={{
+                width: "100%",
+                textAlign: "center",
+                fontFamily: "inter",
+                fontSize: 15,
+                marginTop: 10,
+              }}
+            >
+              {activityText}
+            </Text>
+          </View>
+        </View>
+      )}
       <ImageBackground
         source={require("../assets/nav/background.png")}
         style={{
@@ -569,15 +640,23 @@ const HomeScreen = ({ navigation }) => {
                       disabled={filename.length < 5 ? true : false}
                       onPress={() => {
                         Keyboard.dismiss();
+                        setShowSaveModal(false);
                         try {
+                          setShowActivityIndicator(true);
+                          setActivityText(
+                            "Hold on a bit, while we save your offload."
+                          );
                           saveRecording()
                             .then(() => {
+                              emojiId && setActivityText("and mood.");
                               saveEmoji();
                             })
                             .then(() => {
                               navigation.navigate("calendar");
+                              setShowActivityIndicator(false);
                             });
                         } catch (error) {
+                          setShowActivityIndicator(false);
                           console.log(error);
                         }
                       }}
