@@ -7,6 +7,8 @@ import Profile from "../assets/nav/Profile.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { setScreen } from "../store/appSlice";
 
+import { FontAwesome } from "@expo/vector-icons";
+
 const Nav = ({ navigation }) => {
   const dispatch = useDispatch();
   const { currentScreen } = useSelector((state) => state.app);
@@ -47,17 +49,6 @@ const Nav = ({ navigation }) => {
         </View>
       </TouchableOpacity>
 
-      {/* <TouchableOpacity onPress={() => navigation.navigate("logs")}>
-        <View style={tw` items-center rounded-sm`}>
-          <AntDesign
-            name="profile"
-            size={20}
-            color="black"
-            style={tw`pb-2 font-light text-gray-1000`}
-          />
-        </View>
-      </TouchableOpacity> */}
-
       <TouchableOpacity
         onPress={() => {
           navigation.navigate("calendar");
@@ -72,6 +63,24 @@ const Nav = ({ navigation }) => {
       >
         <View style={tw`items-center rounded-sm`}>
           <Calendar width={30} height={30} />
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => {
+          dispatch(setScreen("journal"));
+          navigation.navigate("journal");
+        }}
+      >
+        <View
+          style={{
+            backgroundColor:
+              currentScreen === "journal" ? "#ffffff" : "transparent",
+            padding: 10,
+            borderRadius: 50,
+          }}
+        >
+          <FontAwesome name="edit" size={30} color="#2196f3" />
         </View>
       </TouchableOpacity>
 

@@ -8,9 +8,12 @@ import {
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import EmojiScreen from "./screens/EmojiScreen";
-import HomeScreen from "./screens/HomeScreen";
+import HomeScreen from "./screens/homeScreen";
 import LogsScreen from "./screens/LogsScreen";
 import CalendarScreen from "./screens/CalendarScreen";
+import JournalScreen from "./screens/JournalScreen";
+import NoteScreen from "./screens/NoteScreen";
+import SearchResultsScreen from "./screens/SearchResultsScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 
 import * as FileSystem from "expo-file-system";
@@ -98,6 +101,27 @@ export default function App() {
               <Stack.Screen
                 name="calendar"
                 component={CalendarScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="journal"
+                component={JournalScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="note"
+                component={NoteScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="search"
+                component={SearchResultsScreen}
                 options={{
                   headerShown: false,
                 }}

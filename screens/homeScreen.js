@@ -345,10 +345,15 @@ const HomeScreen = ({ navigation }) => {
         FileSystem.documentDirectory + "/audio-logs"
       );
 
+      // Get sound details
+      const soundDetails = await recording.getStatusAsync();
+
       let fileUri =
         FileSystem.documentDirectory +
         "/audio-logs/" +
-        `${filename.trim()}⁙※⁂${lengthOfAudio}⁙※⁂${handleDate}.txt`;
+        `${filename.trim()}⁙※⁂${
+          soundDetails.durationMillis
+        }⁙※⁂${handleDate}.txt`;
       if (dirStatus.exists) {
         // Write audio string into new file
         const res = await FileSystem.writeAsStringAsync(fileUri, base64, {
