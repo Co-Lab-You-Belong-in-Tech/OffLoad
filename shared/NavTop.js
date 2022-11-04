@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { AntDesign, Entypo } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-community/async-storage";
 import React from "react";
 import tw from "tailwind-react-native-classnames";
 import { useSelector } from "react-redux";
@@ -11,6 +12,7 @@ const NavTop = ({
   location,
   setShowMic,
   setShowModal,
+  skipWelcome,
 }) => {
   const { currentScreen } = useSelector((state) => state.app);
   const figureTextOut = () => {
@@ -30,7 +32,7 @@ const NavTop = ({
               alignItems: "center",
               fontFamily: "inter",
               color: "#3131C9",
-              fontSize: 15,
+              fontSize: 14,
             }}
           >
             {figureTextOut()}
@@ -54,7 +56,7 @@ const NavTop = ({
               alignItems: "center",
               fontFamily: "inter",
               color: "#3131C9",
-              fontSize: 15,
+              fontSize: 14,
               marginRight: 3,
             }}
           >
@@ -74,7 +76,7 @@ const NavTop = ({
               alignItems: "center",
               fontFamily: "inter",
               color: "#3131C9",
-              fontSize: 15,
+              fontSize: 14,
             }}
           >
             {figureTextOut()}
@@ -100,9 +102,18 @@ const NavTop = ({
       })}
     >
       <TouchableOpacity
-        onPress={() => {
+        onPress={async () => {
           if (type === "Close") {
             return setShowModal(false);
+          }
+          if (type === "Skip" && skipWelcome) {
+            try {
+              console.log("settingItem");
+              await AsyncStorage.setItem("@viewedOnboarding", "true");
+              return navigation.navigate("emoji");
+            } catch (error) {
+              return console.log("Error @setItem:", error);
+            }
           }
           currentScreen === "home" && setShowMic(false);
           times ? navigation.goBack() : navigation.navigate(location);

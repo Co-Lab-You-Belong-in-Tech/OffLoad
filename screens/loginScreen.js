@@ -1,13 +1,21 @@
 import React, { useRef } from "react";
-import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ImageBackground,
+  TouchableOpacity,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "tailwind-react-native-classnames";
 import GoogleLogo from "../assets/loginScreen/google-logo.svg";
+import Kite from "../assets/homeScreen/Kite.svg";
 
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import auth from "@react-native-firebase/auth";
 
 export default function LoginScreen({ navigation }) {
+  const { width } = useWindowDimensions();
   const onGoogleButtonPress = async () => {
     // Get the users ID token
     const { idToken } = await GoogleSignin.signIn();
@@ -61,7 +69,7 @@ export default function LoginScreen({ navigation }) {
                 onPress={onGoogleButtonPress}
                 style={{
                   width: "100%",
-                  maxWidth: 400,
+                  maxWidth: 360,
                   borderRadius: 10,
                   alignSelf: "center",
                   backgroundColor: "white",
@@ -81,7 +89,7 @@ export default function LoginScreen({ navigation }) {
                     fontFamily: "inter",
                     color: "rgba(0, 0, 0, 0.7)",
                     paddingVertical: 20,
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: "600",
                     marginLeft: 20,
                   }}
@@ -95,13 +103,16 @@ export default function LoginScreen({ navigation }) {
                   textAlign: "center",
                   fontFamily: "inter",
                   color: "rgba(0, 0, 0, 0.7)",
-                  marginTop: 60,
+                  marginTop: 20,
                 }}
               >
-                Create an account or login to start your journey.
+                Sign in to continue with OffLoad.
               </Text>
             </View>
           </View>
+        </View>
+        <View style={{ flex: 1, marginLeft: width / 20 }}>
+          <Kite />
         </View>
       </ImageBackground>
     </SafeAreaView>

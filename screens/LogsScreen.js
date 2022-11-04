@@ -87,17 +87,16 @@ const LogsScreen = ({ route, navigation }) => {
               fontSize: 14,
             }}
           >
-            On this day, you offloaded your thoughts and feelings{" "}
+            You logged{" "}
             <Text style={{ color: "#3131C9", fontWeight: "bold" }}>
-              {audioLogs.length > 1 ? audioLogs.length : "once"}
+              {audioLogs.length}{" "}
             </Text>
-            {audioLogs.length > 1 ? " times" : ""} and changed your mood{" "}
+            {audioLogs.length > 1 ? "voice notes" : "voice note"},
             <Text style={{ color: "#3131C9", fontWeight: "bold" }}>
-              {filterSelectedDateEmojis.length > 1
-                ? filterSelectedDateEmojis.length
-                : "once"}
+              {" "}
+              {filterSelectedDateEmojis.length}{" "}
             </Text>
-            {filterSelectedDateEmojis.length > 1 ? " times" : ""}
+            mood {filterSelectedDateEmojis.length > 1 ? "changes." : "change."}
           </Text>
         );
       } else if (!audioLogs.length && filterSelectedDateEmojis.length) {
@@ -108,14 +107,11 @@ const LogsScreen = ({ route, navigation }) => {
               fontSize: 14,
             }}
           >
-            On this day, you did not offload your thoughts and feelings but you
-            changed your mood{" "}
+            You logged{" "}
             <Text style={{ color: "#3131C9", fontWeight: "bold" }}>
-              {filterSelectedDateEmojis.length > 1
-                ? filterSelectedDateEmojis.length
-                : "once"}
+              {audioLogs.length}{" "}
             </Text>
-            {filterSelectedDateEmojis.length > 1 ? " times" : ""}
+            {audioLogs.length > 1 ? "voice notes" : "voice note"}.
           </Text>
         );
       } else if (audioLogs.length && !filterSelectedDateEmojis.length) {
@@ -126,11 +122,11 @@ const LogsScreen = ({ route, navigation }) => {
               fontSize: 14,
             }}
           >
-            On this day, you offloaded your thoughts and feelings{" "}
+            You logged{" "}
             <Text style={{ color: "#3131C9", fontWeight: "bold" }}>
-              {audioLogs.length > 1 ? audioLogs.length : "once"}
+              {filterSelectedDateEmojis.length}{" "}
             </Text>
-            {audioLogs.length > 1 ? " times" : ""} but didn't add your mood
+            mood {filterSelectedDateEmojis.length > 1 ? "changes." : "change."}
           </Text>
         );
       } else {
@@ -182,7 +178,7 @@ const LogsScreen = ({ route, navigation }) => {
       setDurationMillis(playbackStatus.durationMillis);
       if (playbackStatus.isPlaying) {
         // Update your UI for the playing state
-        // setIsPlaying(true);
+        // setIsPlaying(true);2
         setPositionMillis(playbackStatus.positionMillis);
       } else {
         // Update your UI for the paused state
@@ -211,6 +207,9 @@ const LogsScreen = ({ route, navigation }) => {
 
   const playRecording = async (uri, audioId) => {
     // Create a new Audio.Sound instance
+    if (soundObject) {
+      await soundObject.unloadAsync();
+    }
     soundObject = new Audio.Sound();
     try {
       soundObject.setOnPlaybackStatusUpdate(_onPlaybackStatusUpdate);
@@ -390,7 +389,7 @@ const LogsScreen = ({ route, navigation }) => {
                 borderRadius: 3,
                 fontSize: 15,
                 fontWeight: 600,
-                width: 50,
+                width: 90,
                 height: 3,
               }}
             ></View>
@@ -440,7 +439,7 @@ const LogsScreen = ({ route, navigation }) => {
                     borderRadius: 3,
                     fontSize: 15,
                     fontWeight: 600,
-                    width: 50,
+                    width: 65,
                     height: 3,
                   }}
                 ></View>
@@ -540,7 +539,7 @@ const LogsScreen = ({ route, navigation }) => {
                       fontSize: 17,
                     }}
                   >
-                    Offloads
+                    Voice Notes
                   </Text>
                 </View>
 
@@ -552,7 +551,7 @@ const LogsScreen = ({ route, navigation }) => {
                     borderRadius: 3,
                     fontSize: 15,
                     fontWeight: 600,
-                    width: 50,
+                    width: 112,
                     height: 3,
                   }}
                 ></View>
@@ -580,7 +579,26 @@ const LogsScreen = ({ route, navigation }) => {
                     )
                     .map((log, index) => {
                       return (
-                        <View key={index}>
+                        <View
+                          key={index}
+                          style={{
+                            backgroundColor:
+                              index === currentAudioPlayingID
+                                ? "aliceblue"
+                                : "white",
+                            padding: 5,
+                            elevation: 15,
+                            shadowColor: "rgba(0, 0, 0, 0.7)",
+                            shadowOffset: {
+                              width: 0,
+                              height: 20,
+                            },
+                            shadowRadius: 20,
+                            shadowOpacity: 0.5,
+                            borderRadius: 15,
+                            marginBottom: 20,
+                          }}
+                        >
                           <View
                             style={{
                               alignItems: "flex-end",
@@ -593,16 +611,7 @@ const LogsScreen = ({ route, navigation }) => {
                                 color: "rgba(0, 0, 0, 0.4)",
                                 fontSize: 12,
                                 padding: 5,
-                                elevation: 5,
-                                backgroundColor: "white",
-                                shadowOffset: {
-                                  width: 0,
-                                  height: 20,
-                                },
-                                shadowColor: "rgba(0, 0, 0, 0.4)",
-                                shadowOpacity: 1,
-                                shadowRadius: 20,
-                                borderRadius: 5,
+                                backgroundColor: "transparent",
                                 borderBottomRightRadius: 0,
                                 borderBottomLeftRadius: 0,
                               }}
@@ -615,23 +624,9 @@ const LogsScreen = ({ route, navigation }) => {
                           <View
                             key={index}
                             style={{
-                              borderRadius: 10,
                               borderTopRightRadius: 0,
                               flexDirection: "row",
                               alignItems: "flex-start",
-                              backgroundColor:
-                                index === currentAudioPlayingID
-                                  ? "aliceblue"
-                                  : "white",
-                              padding: 5,
-                              elevation: 5,
-                              shadowColor: "rgba(0, 0, 0, 0.4)",
-                              shadowOffset: {
-                                width: 0,
-                                height: 20,
-                              },
-                              shadowRadius: 20,
-                              shadowOpacity: 0.5,
                               width: "100%",
                               marginBottom: 10,
                             }}
@@ -656,7 +651,7 @@ const LogsScreen = ({ route, navigation }) => {
                                   alignItems: "center",
                                   justifyContent: "center",
                                   marginRight: 5,
-                                  backgroundColor: "#white",
+                                  backgroundColor: "white",
                                   borderColor: "rgba(0, 0, 0, 0.3)",
                                   borderWidth: 1,
                                   borderStyle: "solid",
@@ -664,9 +659,9 @@ const LogsScreen = ({ route, navigation }) => {
                               >
                                 {isPlaying &&
                                 currentAudioPlayingID === index ? (
-                                  <Pause width={50} />
+                                  <Pause width={30} />
                                 ) : (
-                                  <Play width={50} />
+                                  <Play width={30} />
                                 )}
                               </TouchableOpacity>
                             </View>

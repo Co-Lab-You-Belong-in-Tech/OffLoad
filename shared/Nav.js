@@ -3,11 +3,10 @@ import React from "react";
 import tw from "tailwind-react-native-classnames";
 import Record from "../assets/nav/Record.svg";
 import Calendar from "../assets/nav/Calendar.svg";
+import Create from "../assets/nav/Create.svg";
 import Profile from "../assets/nav/Profile.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { setScreen } from "../store/appSlice";
-
-import { FontAwesome } from "@expo/vector-icons";
 
 const Nav = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -71,16 +70,21 @@ const Nav = ({ navigation }) => {
           dispatch(setScreen("journal"));
           navigation.navigate("journal");
         }}
+        style={{
+          backgroundColor:
+            currentScreen === "journal" ? "#ffffff" : "transparent",
+          padding: 10,
+          borderRadius: 50,
+        }}
       >
-        <View
-          style={{
-            backgroundColor:
-              currentScreen === "journal" ? "#ffffff" : "transparent",
-            padding: 10,
-            borderRadius: 50,
-          }}
-        >
-          <FontAwesome name="edit" size={30} color="#2196f3" />
+        <View style={tw`items-center rounded-sm`}>
+          <Create
+            width={30}
+            height={30}
+            style={{
+              transform: [{ translateX: 2 }],
+            }}
+          />
         </View>
       </TouchableOpacity>
 

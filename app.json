@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "HeadiesBox",
+    "name": "OffLoad",
     "slug": "HeadiesBox",
     "version": "1.0.0",
     "orientation": "portrait",
     "plugins": ["@react-native-google-signin/google-signin"],
-    "icon": "./assets/icon.png",
+    "icon": "./assets/offload-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splashscreen.png",
@@ -14,12 +14,12 @@
     },
     "androidStatusBar": {
       "backgroundColor": "#3131C9",
-      "style": "light",
+      "barStyle": "light-content",
       "translucent": true
     },
     "androidNavigationBar": {
       "visible": false,
-      "barStyle": "light",
+      "barStyle": "light-content",
       "backgroundColor": "#3131C9"
     },
     "updates": {

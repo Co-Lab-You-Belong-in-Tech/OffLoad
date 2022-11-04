@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   ScrollView,
   ImageBackground,
   Modal,
@@ -11,8 +10,7 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
   TextInput,
-  BackHandler,
-  Alert,
+  useWindowDimensions,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import moment from "moment";
@@ -33,9 +31,13 @@ import { Feather } from "@expo/vector-icons";
 import { fileSeperator } from "../constants/fileSeperator";
 import { useDispatch, useSelector } from "react-redux";
 import { resetScreen, setScreen } from "../store/appSlice";
+import Search from "../assets/journalScreen/Search.svg";
+import Pencil from "../assets/journalScreen/Pencil.svg";
+import ChevronRight from "../assets/journalScreen/Chevron-Right.svg";
 
 const JournalScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
+  const { width } = useWindowDimensions();
 
   const { currentScreen } = useSelector((state) => state.app);
 
@@ -208,7 +210,7 @@ const JournalScreen = ({ route, navigation }) => {
     fetchNotes();
   }, []);
 
-  //   delete user's notes on mount
+  // delete user's notes on mount
   //   useEffect(() => {
   //     resetNotes();
   //   }, []);
@@ -279,7 +281,7 @@ const JournalScreen = ({ route, navigation }) => {
                   justifyContent: "center",
                   backgroundColor: "white",
                   marginTop: 20,
-                  borderRadius: 10,
+                  borderRadius: 25,
                   elevation: 10,
                   shadowColor: "#000000",
                   shadowOffset: 5,
@@ -328,7 +330,7 @@ const JournalScreen = ({ route, navigation }) => {
                   backgroundColor: "white",
                   elevation: 10,
                   shadowColor: "#000000",
-                  borderRadius: 10,
+                  borderRadius: 25,
                   shadowOffset: 5,
                   shadowOpacity: 0.3,
                   shadowRadius: 10,
@@ -497,17 +499,20 @@ const JournalScreen = ({ route, navigation }) => {
                 alignItems: "stretch",
                 justifyContent: "space-between",
                 alignSelf: "flex-end",
+                marginTop: 20,
               }}
             >
               {/* Search Box */}
               <View
                 style={{
                   justifyContent: "flex-end",
-                  borderBottomColor: "rgba(0,0,0, 0.3)",
-                  borderBottomWidth: 1,
+                  borderColor: "#CCC6C6",
+                  backgroundColor: "#D9D9D9",
+                  borderWidth: 1,
                   flexDirection: "row",
                   alignItems: "flex-end",
-                  paddingBottom: 5,
+                  paddingVertical: 7,
+                  borderRadius: 30,
                 }}
               >
                 <TouchableOpacity
@@ -515,14 +520,15 @@ const JournalScreen = ({ route, navigation }) => {
                     borderRadius: 40,
                     alignItems: "center",
                     justifyContent: "center",
-                    marginRight: 5,
+                    marginLeft: 5,
+                    marginRight: 7,
                   }}
                   onPress={searchNotes}
                 >
-                  <Feather name="search" size={24} color="#2196f3" />
+                  <Search width={30} height={30} />
                 </TouchableOpacity>
                 <TextInput
-                  placeholder="Search your notes here..."
+                  placeholder="Search for notes"
                   style={{
                     fontFamily: "inter",
                     flexDirection: "row",
@@ -535,23 +541,25 @@ const JournalScreen = ({ route, navigation }) => {
                   onSubmitEditing={searchNotes}
                 />
               </View>
+              {/* Create note button */}
               <TouchableOpacity
                 style={{
-                  height: 40,
-                  width: 40,
+                  minHeight: 40,
+                  minWidth: 40,
                   borderRadius: 40,
-                  elevation: 5,
-                  shadowColor: "#000000",
-                  backgroundColor: "white",
+                  borderColor: "#CCC6C6",
+                  backgroundColor: "#D9D9D9",
+                  borderWidth: 1,
                   shadowRadius: 5,
                   alignItems: "center",
                   justifyContent: "center",
+                  padding: 10,
                 }}
                 onPress={() => {
                   setShowModal(true);
                 }}
               >
-                <Entypo name="add-to-list" size={24} color="#2196f3" />
+                <Pencil width={25} height={25} style={{}} />
               </TouchableOpacity>
             </View>
 
@@ -573,19 +581,12 @@ const JournalScreen = ({ route, navigation }) => {
                     fontFamily: "inter",
                     textAlign: "center",
                     lineHeight: 24,
-                  }}
-                >
-                  You have no notes to display here.
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "inter",
-                    textAlign: "center",
-                    lineHeight: 24,
+                    fontSize: 14,
                     textAlignVertical: "center",
+                    color: "#6C6565",
                   }}
                 >
-                  Press the{"  "}
+                  Tap{"  "}
                   <View
                     style={{
                       maxHeight: 30,
@@ -597,23 +598,15 @@ const JournalScreen = ({ route, navigation }) => {
                       backgroundColor: "white",
                       alignSelf: "flex-end",
                       padding: 5,
-                      elevation: 5,
-                      shadowColor: "#000000",
-                      shadowRadius: 5,
+                      borderColor: "#CCC6C6",
+                      backgroundColor: "#D9D9D9",
                       transform: [{ translateY: 8 }],
                     }}
                   >
-                    <Entypo
-                      name="add-to-list"
-                      size={16}
-                      color="#2196f3"
-                      style={{
-                        textAlignVertical: "center",
-                      }}
-                    />
+                    <Pencil width={16} height={16} style={{}} />
                   </View>
                   {"  "}
-                  button above to create a new note.
+                  to add note.
                 </Text>
               </View>
             )}
@@ -636,41 +629,50 @@ const JournalScreen = ({ route, navigation }) => {
                     >
                       <View
                         style={{
-                          backgroundColor: "white",
+                          backgroundColor: "#EBEBEB",
+                          borderWidth: 1,
+                          borderColor: "#B7B7B7",
                           padding: 10,
                           borderRadius: 10,
                           marginBottom: 20,
-                          elevation: 0,
-                          shadowColor: "#bababa",
-                          shadowOffset: 5,
-                          shadowOpacity: 0.5,
-                          shadowRadius: 5,
                           margin: 10,
                           marginTop: 0,
                         }}
                       >
                         <Text
-                          style={{
-                            fontFamily: "inter",
-                            color: "rgba(0, 0, 0, 0.5)",
-                          }}
-                        >
-                          {moment(entry.date).fromNow()}
-                        </Text>
-                        <Text
                           numberOfLines={1}
                           ellipsizeMode="tail"
                           style={{
                             fontFamily: "titan",
-                            fontSize: 16,
-                            paddingRight: 5,
+                            fontSize: width / 20 >= 20 ? 20 : width / 20,
+                            paddingRight: 15,
                             color: "#3131C9",
                           }}
                         >
                           {entry.title}
                         </Text>
+                        <Text
+                          style={{
+                            fontFamily: "inter",
+                            color: "#A49B9C",
+                            fontSize: 12,
+                            marginTop: 7,
+                          }}
+                        >
+                          {moment(entry.date).fromNow()}
+                        </Text>
                         {/* <Text>{entry.note}</Text> */}
                       </View>
+                      <TouchableOpacity
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          right: 15,
+                          transform: [{ translateY: -22 }],
+                        }}
+                      >
+                        <ChevronRight width={25} height={25} />
+                      </TouchableOpacity>
                     </TouchableOpacity>
                   );
                 })}

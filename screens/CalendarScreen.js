@@ -10,6 +10,7 @@ import {
 import moment from "moment";
 import * as FileSystem from "expo-file-system";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Animatable from "react-native-animatable";
 import { Entypo } from "@expo/vector-icons";
 import NavTop from "../shared/NavTop";
 import Nav from "../shared/Nav";

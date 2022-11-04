@@ -6,6 +6,5 @@ export const emotions = {
     4: require("./Asset-4.png"),
     5: require("./Asset-5.png"),
     6: require("./Asset-6.png"),
-    7: require("./Asset-7.png"),
   },
 };

@@ -3,12 +3,12 @@ export default function greetings() {
   let time = d.getHours();
 
   if (time < 12) {
-    return "Good Morning!";
+    return "Good Morning";
   }
   if (time > 12) {
-    return "Good Afternoon!";
+    return "Good Afternoon";
   }
   if (time == 12) {
-    return "Good Evening!";
+    return "Good Evening";
   }
 }

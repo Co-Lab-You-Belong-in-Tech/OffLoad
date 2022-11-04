@@ -13,6 +13,7 @@ import {
   TextInput,
   BackHandler,
   Alert,
+  useWindowDimensions,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import moment from "moment";
@@ -33,9 +34,11 @@ import { Feather } from "@expo/vector-icons";
 import { fileSeperator } from "../constants/fileSeperator";
 import { useDispatch, useSelector } from "react-redux";
 import { resetScreen, setScreen } from "../store/appSlice";
+import ChevronRight from "../assets/journalScreen/Chevron-Right.svg";
 
 const SearchResultsScreen = ({ route, navigation }) => {
   const searchResults = JSON.parse(JSON.stringify(route.params.searchResults));
+  const { width } = useWindowDimensions();
 
   const dispatch = useDispatch();
 
@@ -138,40 +141,50 @@ const SearchResultsScreen = ({ route, navigation }) => {
                   >
                     <View
                       style={{
-                        backgroundColor: "white",
+                        backgroundColor: "#EBEBEB",
+                        borderWidth: 1,
+                        borderColor: "#B7B7B7",
                         padding: 10,
                         borderRadius: 10,
                         marginBottom: 20,
-                        elevation: 0,
-                        shadowColor: "#bababa",
-                        shadowOffset: 5,
-                        shadowOpacity: 0.5,
-                        shadowRadius: 5,
                         margin: 10,
                         marginTop: 0,
                       }}
                     >
                       <Text
-                        style={{
-                          fontFamily: "inter",
-                          color: "rgba(0, 0, 0, 0.5)",
-                        }}
-                      >
-                        {moment(entry.date).fromNow()}
-                      </Text>
-                      <Text
                         numberOfLines={1}
                         ellipsizeMode="tail"
                         style={{
                           fontFamily: "titan",
-                          fontSize: 16,
-                          paddingRight: 5,
+                          fontSize: width / 20 >= 20 ? 20 : width / 20,
+                          paddingRight: 15,
                           color: "#3131C9",
                         }}
                       >
                         {entry.title}
                       </Text>
+                      <Text
+                        style={{
+                          fontFamily: "inter",
+                          color: "#A49B9C",
+                          fontSize: 12,
+                          marginTop: 7,
+                        }}
+                      >
+                        {moment(entry.date).fromNow()}
+                      </Text>
+                      {/* <Text>{entry.note}</Text> */}
                     </View>
+                    <TouchableOpacity
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        right: 15,
+                        transform: [{ translateY: -22 }],
+                      }}
+                    >
+                      <ChevronRight width={25} height={25} />
+                    </TouchableOpacity>
                   </TouchableOpacity>
                 );
               })}
