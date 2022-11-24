@@ -31,23 +31,23 @@ For our first build and version, we decided to implement and integrated the foll
 
 <h3 style="font-weight: bolder">Record Voice Notes 🔊</h3>
 
-<img src="https://offload.live/assets/phones/7.png" alt="OffLoad Promotional Image" title="OffLoad Feature Graphic" style="display: block; width: 50%; border-radius: 10px; margin: 20px auto;">
-<p align="center"  style="width: 70%; margin: 0 auto">
+<img src="https://offload.live/assets/phones/7.png" alt="OffLoad Promotional Image" title="OffLoad Feature Graphic" style="display: block; width: 50%; border-radius: 10px; margin: 20px 0;">
+<p align="left"  style="margin: 0 auto">
 Conveniently record how you feel and save them as voice notes.
 </p>
 </br>
 </br>
 <h3 style="font-weight: bolder">Track Your Moods 😁</h3>
-<img src="https://offload.live/assets/phones/8.png" alt="OffLoad Promotional Image" title="OffLoad Feature Graphic" style="display: block; width: 50%; border-radius: 10px; margin: 20px auto;">
-<p align="center" style="width: 70%; margin: 0 auto">
+<img src="https://offload.live/assets/phones/8.png" alt="OffLoad Promotional Image" title="OffLoad Feature Graphic" style="display: block; width: 50%; border-radius: 10px; margin: 20px;">
+<p align="left" style="margin: 0 auto">
 Easily choose an emoji that represents your mood and track this on the Calendar.
 </p>
 </br>
 </br>
 
 <h3 style="font-weight: bolder">Write Notes 📝</h3>
-<img src="https://offload.live/assets/phones/9.png" alt="OffLoad Promotional Image" title="OffLoad Feature Graphic" style="display: block; width: 50%; border-radius: 10px; margin: 20px auto;">
-<p align="center" style="width: 70%; margin: 0 auto">
+<img src="https://offload.live/assets/phones/9.png" alt="OffLoad Promotional Image" title="OffLoad Feature Graphic" style="display: block; width: 50%; border-radius: 10px; margin: 20px 0;">
+<p align="left" style="margin: 0 auto">
 Comfortably write down your feelings and journal your thoughts.
 </p>
 </br>
