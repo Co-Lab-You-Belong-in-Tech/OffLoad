@@ -437,12 +437,14 @@ const CalendarScreen = ({ navigation }) => {
         key={rowIndex}
         style={{
           flexDirection: "row",
-          marginHorizontal: 15,
+          marginHorizontal: "auto",
           justifyContent: "center",
+          alignSelf: "center",
           alignItems: "center",
           borderRadius: setBorderRadius(rowIndex),
           overflow: rowIndex === 0 ? "hidden" : "visible",
           marginVertical: 5,
+          maxWidth: 420,
         }}
       >
         {rowItems}
@@ -484,6 +486,7 @@ const CalendarScreen = ({ navigation }) => {
                 paddingLeft: 15,
                 textAlignVertical: "bottom",
                 fontFamily: "inter",
+                color: "rgba(0, 0, 0, 0.7)",
               }}
             >
               <Text

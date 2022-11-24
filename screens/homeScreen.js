@@ -107,7 +107,10 @@ const HomeScreen = ({ navigation }) => {
   const [showActivityIndicator, setShowActivityIndicator] = useState(false);
   const [activityText, setActivityText] = useState("");
   const [delay, _] = useState(500);
+  const [audioMetering, setAudioMetering] = useState([]);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
+  const { width, height } = useWindowDimensions();
 
   // Reset audio logs file || TO BE USED
   const resetAudioLogs = async () => {
@@ -258,6 +261,24 @@ const HomeScreen = ({ navigation }) => {
       }
     }
   };
+  const _onRecordStatusUpdate = (recordingStatus) => {
+    if (recordingStatus.isRecording) {
+      setAudioMetering((prev) => [
+        Math.trunc((Math.abs(recordingStatus.metering + 160) / 160) * 10),
+        ...prev,
+      ]);
+    }
+    // if (recordingStatus.isRecording) {
+    //   setAudioMetering(
+    //     audioMetering.push(
+    //       Math.trunc((Math.abs(recordingStatus.metering + 160) / 160) * 10)
+    //     )
+    //   );
+    // }
+    if (recordingStatus.isDoneRecording) {
+      console.log("audioMeter", audioMetering);
+    }
+  };
 
   const startRecording = async () => {
     recording = new Audio.Recording(); // new instance of Audio.Recording
@@ -278,6 +299,7 @@ const HomeScreen = ({ navigation }) => {
         Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
       );
       await recording.startAsync();
+      console.log(recording.setOnRecordingStatusUpdate(_onRecordStatusUpdate));
       console.log("Recording started");
     } catch (err) {
       recording = undefined;
@@ -426,6 +448,7 @@ const HomeScreen = ({ navigation }) => {
       );
 
       if (fileRes) {
+        setAudioMetering([]);
         setShowSaveModal(false);
         setFilename("");
         recording = undefined;
@@ -444,6 +467,7 @@ const HomeScreen = ({ navigation }) => {
     recording = undefined;
     setIsRecording(false);
     setShowEmoji(false);
+    setAudioMetering([]);
     setShowMic(true);
   };
 
@@ -1128,7 +1152,7 @@ const HomeScreen = ({ navigation }) => {
               )}
 
               {!recording && (
-                <View style={tw` w-full mt-10 mx-4`}>
+                <View style={tw` w-full mt-10`}>
                   <Animatable.Text
                     animation="bounceIn"
                     duration={2000}
@@ -1138,8 +1162,8 @@ const HomeScreen = ({ navigation }) => {
                     style={{
                       fontFamily: "titan",
                       fontSize: 40,
-                      width: "100%",
                       color: "#3131C9",
+                      paddingHorizontal: 10,
                     }}
                   >
                     What's on your mind today?
@@ -1148,7 +1172,14 @@ const HomeScreen = ({ navigation }) => {
               )}
             </View>
 
-            <View style={{ flex: 1, paddingBottom: 20 }}>
+            <View
+              style={{
+                flex: 1,
+                paddingBottom: 20,
+                justifyContent: "center",
+                overflow: "visible",
+              }}
+            >
               {/* OffLoad logo displayed while loading */}
               {recording && isRecording && (
                 <Kite
@@ -1167,70 +1198,72 @@ const HomeScreen = ({ navigation }) => {
                     backgroundColor: "#3131C9",
                     marginTop: "10%",
                     borderRadius: 10,
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "flex-start",
                     paddingHorizontal: 5,
                     marginHorizontal: 16,
                     position: "relative",
+                    maxWidth: 320,
+                    alignSelf: "center",
                   }}
                 >
                   {/* Play/Pause button */}
-                  <View
-                    style={tw.style(
-                      "rounded-full",
-                      "flex-row",
-                      "justify-center",
-                      "items-center",
-                      {
-                        width: 40,
-                        height: 40,
-                        marginRight: 5,
-                        backgroundColor: "rgba(255, 255, 255, 1)",
-                        position: "relative",
-                        borderRadius: 20,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }
-                    )}
-                  >
-                    {isPlaying ? (
-                      <TouchableOpacity>
-                        <SmallPause
-                          onPress={() => pauseSound()}
-                          style={{
-                            width: 30,
-                            alignSelf: "center",
-                          }}
-                        />
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity onPress={() => playRecording()}>
-                        <SmallPlay
-                          style={{
-                            width: 30,
-                            alignSelf: "center",
-                          }}
-                        />
-                      </TouchableOpacity>
-                    )}
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View
+                      style={tw.style(
+                        "rounded-full",
+                        "flex-row",
+                        "justify-center",
+                        "items-center",
+                        {
+                          width: 40,
+                          height: 40,
+                          marginRight: 5,
+                          backgroundColor: "rgba(255, 255, 255, 1)",
+                          position: "relative",
+                          borderRadius: 20,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginRight: 15,
+                        }
+                      )}
+                    >
+                      {isPlaying ? (
+                        <TouchableOpacity>
+                          <SmallPause
+                            onPress={() => pauseSound()}
+                            style={{
+                              width: 30,
+                              alignSelf: "center",
+                            }}
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity onPress={() => playRecording()}>
+                          <SmallPlay
+                            style={{
+                              width: 30,
+                              alignSelf: "center",
+                            }}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <SoundWave
+                      style={{
+                        flex: 1,
+                      }}
+                    />
                   </View>
-                  <SoundWave
-                    style={{
-                      flex: 1,
-                    }}
-                  />
                   <View
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      position: "absolute",
-                      bottom: 10,
-                      left: 0,
-                      flex: 1,
                       width: "100%",
-                      paddingLeft: 45,
+                      maxWidth: 320,
+                      paddingLeft: 55,
+                      transform: [{ translateY: 15 }],
                     }}
                   >
                     <Text
@@ -1238,6 +1271,7 @@ const HomeScreen = ({ navigation }) => {
                         color: "white",
                         fontFamily: "inter",
                         fontSize: 12,
+                        flex: 1,
                       }}
                     >
                       {showTime("min", audioSeek)}:{showTime("sec", audioSeek)}
@@ -1262,7 +1296,7 @@ const HomeScreen = ({ navigation }) => {
                   style={{
                     marginTop: 10,
                     flexDirection: "row",
-                    justifyContent: "flex-start",
+                    justifyContent: "center",
                     alignItems: "center",
                     marginHorizontal: 16,
                   }}
@@ -1275,6 +1309,7 @@ const HomeScreen = ({ navigation }) => {
                       fontSize: 15,
                       textAlign: "left",
                       flex: 1,
+                      maxWidth: 320,
                     }}
                     numberOfLines={1}
                   >
@@ -1307,22 +1342,50 @@ const HomeScreen = ({ navigation }) => {
 
               {/* Soundwave while user is recording */}
               {isRecording && (
-                <BlueSoundWave style={{ width: "100%", alignSelf: "center" }} />
+                <View
+                  style={{
+                    width: "100%",
+                    alignSelf: "center",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    minHeight: height / 10,
+                    padding: 0,
+                    marginTop: 20,
+                  }}
+                >
+                  {isRecording &&
+                    audioMetering.map((value, index) => {
+                      return (
+                        <View
+                          key={index}
+                          style={{
+                            width: 6,
+                            height: value * 6 + 6,
+                            backgroundColor: "#3131C9",
+                            borderRadius: 6,
+                            marginLeft: 10,
+                          }}
+                        ></View>
+                      );
+                    })}
+                  {/* <Text>{audioMetering}</Text> */}
+                </View>
               )}
 
               {/* mic container */}
               <View
                 style={{
                   flex: 1,
+                  // marginTop: !isRecording && showMic ? "20%" : 0,
                   flexDirection: "row",
-                  alignItems: "flex-start",
+                  alignItems: "center",
                   justifyContent: "space-around",
                   marginBottom: 10,
                   marginHorizontal: 16,
                 }}
               >
                 <TouchableOpacity
-                  style={tw` self-center mt-10`}
+                  style={tw` self-center mt-${height > 720 ? 20 : 20}`}
                   onPress={() => {
                     recordingIsPaused ? continueRecording() : pauseRecording();
                   }}
@@ -1334,12 +1397,11 @@ const HomeScreen = ({ navigation }) => {
                       "justify-center",
                       "items-center",
                       {
-                        width: 80,
-                        height: 80,
+                        width: height > 720 ? 80 : 60,
+                        height: height > 720 ? 80 : 60,
                         borderColor: "rgba(0, 0, 0, 0.25)",
                         borderWidth: isRecording ? 2 : 0,
                         borderStyle: "solid",
-                        marginTop: 10,
                       }
                     )}
                   >
@@ -1356,7 +1418,7 @@ const HomeScreen = ({ navigation }) => {
                     if (!isRecording && recording && showEmoji)
                       return navigation.navigate("emoji");
                   }}
-                  style={tw` self-center mt-10`}
+                  style={tw` self-center mt-${height > 720 ? 20 : 20}`}
                   activeOpacity={0.7}
                 >
                   <Animatable.View
@@ -1371,29 +1433,50 @@ const HomeScreen = ({ navigation }) => {
                       "justify-center",
                       "items-center",
                       {
-                        width: 80,
-                        height: 80,
+                        width:
+                          height > 720
+                            ? 80
+                            : height < 720 && isRecording
+                            ? 60
+                            : 70,
+                        height:
+                          height > 720
+                            ? 80
+                            : height < 720 && isRecording
+                            ? 60
+                            : 70,
                         borderColor: "rgba(0, 0, 0, 0.25)",
                         borderWidth: !isRecording && recording ? 0 : 2,
                         borderStyle: "solid",
-                        marginTop: 10,
                         marginHorizontal: 10,
                       }
                     )}
                   >
                     {isRecording && <Stop />}
-                    {!isRecording && showMic && <Microphone />}
+                    {!isRecording && showMic && (
+                      <Microphone
+                        width={height > 720 ? 70 : 60}
+                        height={height > 720 ? 70 : 60}
+                      />
+                    )}
                     {!isRecording && recording && showEmoji && (
                       <Image
                         source={emotions.assets[emojiId]}
                         style={{
-                          width: screenWidth / 2 - 30,
-                          height: screenWidth / 2 - 30,
+                          width:
+                            height > 720
+                              ? screenWidth / 2 - 30
+                              : screenWidth / 2 - 60,
+                          height:
+                            height > 720
+                              ? screenWidth / 2 - 30
+                              : screenWidth / 2 - 60,
                           maxWidth: 200,
                           maxHeight: 200,
                           borderWidth: 1,
                           borderColor: "rgba(0, 0, 0, 0.25)",
                           borderRadius: 20,
+                          marginTop: height > 720 ? 0 : 10,
                         }}
                       />
                     )}
@@ -1401,8 +1484,8 @@ const HomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={tw` self-center mt-10`}
-                  onPress={() => setShowResetModal(true)}
+                  style={tw` self-center mt-${height > 720 ? 20 : 20}`}
+                  onPress={() => isRecording && setShowResetModal(true)}
                 >
                   <View
                     style={tw.style(
@@ -1411,12 +1494,11 @@ const HomeScreen = ({ navigation }) => {
                       "justify-center",
                       "items-center",
                       {
-                        width: 80,
-                        height: 80,
+                        width: height > 720 ? 80 : 60,
+                        height: height > 720 ? 80 : 60,
                         borderColor: "rgba(0, 0, 0, 0.25)",
                         borderWidth: isRecording ? 2 : 0,
                         borderStyle: "solid",
-                        marginTop: 10,
                       }
                     )}
                   >
@@ -1433,7 +1515,7 @@ const HomeScreen = ({ navigation }) => {
                     fontSize: 14,
                     fontFamily: "inter",
                     textAlign: "center",
-                    transform: [{ translateY: 30 }],
+                    transform: [{ translateY: height > 720 ? 50 : 10 }],
                   }}
                 >
                   {emojiId
@@ -1477,14 +1559,14 @@ const HomeScreen = ({ navigation }) => {
                     "max-w-xs",
                     "items-center",
                     "justify-between",
-                    "m-3",
                     "mx-4",
                     {
                       alignItems: "flex-start",
-                      marginTop: screenHeight / 12 - 10,
+                      marginTop: height > 640 ? screenHeight / 12 - 10 : 40,
                       width: "100%",
                       justifyContent: "space-around",
                       maxWidth: 360,
+                      marginTop: height > 720 ? height / 10 : height / 10 - 20,
                     }
                   )}
                 >
@@ -1497,16 +1579,17 @@ const HomeScreen = ({ navigation }) => {
                         "justify-center",
                         "items-center",
                         {
-                          width: 70,
-                          height: 70,
+                          width: height > 720 ? 70 : 55,
+                          height: height > 720 ? 70 : 55,
                           borderColor: "rgba(0, 0, 0, 0.25)",
                           borderWidth: 1,
                           marginHorizontal: 20,
                           borderStyle: "solid",
-                          marginTop: 20,
+                          marginTop: height > 720 ? 20 : 0,
                         }
                       )}
                     >
+                      {console.log(height)}
                       <Delete />
                     </View>
                   </TouchableOpacity>
@@ -1525,13 +1608,13 @@ const HomeScreen = ({ navigation }) => {
                         "justify-center",
                         "items-center",
                         {
-                          width: 70,
-                          height: 70,
+                          width: height > 720 ? 70 : 55,
+                          height: height > 720 ? 70 : 55,
                           borderColor: "rgba(0, 0, 0, 0.25)",
                           borderWidth: 1,
                           marginHorizontal: 20,
                           borderStyle: "solid",
-                          marginTop: 20,
+                          marginTop: height > 720 ? 20 : 0,
                         }
                       )}
                     >

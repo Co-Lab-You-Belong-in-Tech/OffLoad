@@ -23,6 +23,17 @@ const timing = 1000;
 let soundObject;
 let audioInterval;
 let seconds = 0;
+const initialStatus = {
+  progressUpdateIntervalMillis: 500,
+  positionMillis: 0,
+  shouldPlay: false,
+  rate: 1.0,
+  shouldCorrectPitch: false,
+  volume: 1.0,
+  isMuted: false,
+  isLooping: false,
+  audioPan: 0,
+};
 
 const LogsScreen = ({ route, navigation }) => {
   const audioLogDate = JSON.parse(JSON.stringify(route.params.audioLogDate));
@@ -40,6 +51,7 @@ const LogsScreen = ({ route, navigation }) => {
   const [startTimer, setStartTimer] = useState(false);
   const [durationMillis, setDurationMillis] = useState(0);
   const [positionMillis, setPositionMillis] = useState(0);
+  const [showSeek, setShowSeek] = useState(false);
 
   // Helper function for logging out user
   const signOutHandler = async () => {
@@ -167,6 +179,7 @@ const LogsScreen = ({ route, navigation }) => {
     if (!playbackStatus.isLoaded) {
       // Update your UI for the unloaded state
       audioInterval && clearInterval(audioInterval);
+      setShowSeek(false);
       if (playbackStatus.error) {
         console.log(
           `Encountered a fatal error during playback: ${playbackStatus.error}`
@@ -178,7 +191,8 @@ const LogsScreen = ({ route, navigation }) => {
       setDurationMillis(playbackStatus.durationMillis);
       if (playbackStatus.isPlaying) {
         // Update your UI for the playing state
-        // setIsPlaying(true);2
+        // setIsPlaying(true);
+        console.log(playbackStatus);
         setPositionMillis(playbackStatus.positionMillis);
       } else {
         // Update your UI for the paused state
@@ -200,6 +214,8 @@ const LogsScreen = ({ route, navigation }) => {
         setAudioTiming(0);
         setPositionMillis(0);
         setCurrentAudioPlayingID(null);
+        setShowSeek(false);
+        console.log("showseek:", showSeek);
         soundObject = null;
       }
     }
@@ -208,6 +224,7 @@ const LogsScreen = ({ route, navigation }) => {
   const playRecording = async (uri, audioId) => {
     // Create a new Audio.Sound instance
     if (soundObject) {
+      setShowSeek(false);
       await soundObject.unloadAsync();
     }
     soundObject = new Audio.Sound();
@@ -219,10 +236,13 @@ const LogsScreen = ({ route, navigation }) => {
       setIsDisabled(true);
       await soundObject.loadAsync({
         uri,
+        initialStatus,
       });
 
       console.log("Playing Sound");
       setIsPlaying(true);
+      setShowSeek(true);
+      console.log("showseek:", showSeek);
       soundObject.playAsync().then(() => {
         setStartTimer(true);
       });

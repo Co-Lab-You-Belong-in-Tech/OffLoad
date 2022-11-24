@@ -18,7 +18,6 @@
       "translucent": true
     },
     "androidNavigationBar": {
-      "visible": false,
       "barStyle": "light-content",
       "backgroundColor": "#3131C9"
     },
@@ -30,6 +29,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.jsjags01.HeadiesBox",
+      "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -39,8 +40,7 @@
         "image": "./assets/splashscreen.png",
         "resizeMode": "cover",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.jsjags01.HeadiesBox"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

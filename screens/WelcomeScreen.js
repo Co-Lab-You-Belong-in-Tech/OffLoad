@@ -169,28 +169,31 @@ export default function WelcomeScreen({ navigation }) {
               paddingTop: 10,
             }}
           >
-            <Text
-              style={{
-                color: "#3131C9",
-                fontFamily: "titan",
-                fontSize: 48,
-                marginTop: 40,
-                width: "100%",
-              }}
-            >
-              Hi!
-            </Text>
-            <Text
-              style={{
-                color: "#3131C9",
-                fontFamily: "titan",
-                fontSize: 48,
-              }}
-            >
-              Welcome Back...
-            </Text>
+            <View style={{ width: "100%", padding: 10 }}>
+              <Text
+                style={{
+                  color: "#3131C9",
+                  fontFamily: "titan",
+                  fontSize: 48,
+                  marginTop: 40,
+                  width: "100%",
+                }}
+              >
+                Hi!
+              </Text>
+              <Text
+                style={{
+                  color: "#3131C9",
+                  fontFamily: "titan",
+                  fontSize: 48,
+                }}
+              >
+                Welcome Back...
+              </Text>
+            </View>
             <View
               style={{
+                flex: 1,
                 width: "100%",
                 flexDirection: "row",
                 alignItems: "flex-end",
@@ -200,7 +203,7 @@ export default function WelcomeScreen({ navigation }) {
             >
               <Image
                 source={require("../assets/welcomeScreen/InteriorDesign.png")}
-                style={{ width: 300, height: 300 }}
+                style={{ width: "80%" }}
               />
             </View>
           </View>

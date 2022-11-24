@@ -169,6 +169,10 @@ export default function EmojiScreen({ navigation }) {
                           borderColor: "#dadbdf",
                           borderWidth: 1,
                           borderStyle: "solid",
+                          width: width / 2 - 30,
+                          height: width / 2 - 30,
+                          maxWidth: 250,
+                          maxHeight: 250,
                         }}
                         onPress={(event) => {
                           handleEmojiPress(emoji);
@@ -178,7 +182,8 @@ export default function EmojiScreen({ navigation }) {
                           style={{
                             width: width / 2 - 30,
                             height: width / 2 - 30,
-                            maxWidth: 200,
+                            maxWidth: 250,
+                            maxHeight: 250,
                           }}
                           source={emotions.assets[emoji]}
                         />
@@ -207,8 +212,10 @@ export default function EmojiScreen({ navigation }) {
                   >
                     <Image
                       style={{
-                        width: 150,
-                        height: 150,
+                        width: width / 2 - 30,
+                        height: width / 2 - 30,
+                        maxWidth: 250,
+                        maxHeight: 250,
                       }}
                       source={emotions.assets[emojiId]}
                     />

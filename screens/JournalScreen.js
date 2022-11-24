@@ -346,7 +346,7 @@ const JournalScreen = ({ route, navigation }) => {
                     alignSelf: "flex-end",
                     padding: 5,
                     borderRadius: 35,
-                    backgroundColor: "white",
+                    // backgroundColor: "white",
                     position: "absolute",
                     top: 10,
                     right: 5,
@@ -494,7 +494,6 @@ const JournalScreen = ({ route, navigation }) => {
                 paddingVertical: 10,
                 paddingHorizontal: 10,
                 width: "100%",
-                maxWidth: 360,
                 flexDirection: "row",
                 alignItems: "stretch",
                 justifyContent: "space-between",
@@ -505,7 +504,8 @@ const JournalScreen = ({ route, navigation }) => {
               {/* Search Box */}
               <View
                 style={{
-                  justifyContent: "flex-end",
+                  flex: 1,
+                  justifyContent: "flex-start",
                   borderColor: "#CCC6C6",
                   backgroundColor: "#D9D9D9",
                   borderWidth: 1,
@@ -513,6 +513,7 @@ const JournalScreen = ({ route, navigation }) => {
                   alignItems: "flex-end",
                   paddingVertical: 7,
                   borderRadius: 30,
+                  marginRight: 10,
                 }}
               >
                 <TouchableOpacity

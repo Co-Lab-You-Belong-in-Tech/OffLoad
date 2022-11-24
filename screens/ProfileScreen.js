@@ -112,27 +112,29 @@ const ProfileScreen = ({ navigation }) => {
               </Text>
             )}
           </View>
-          <ScrollView style={tw` flex-1`}>
-            <View style={styles.details}>
-              <Text style={styles.title}>Name</Text>
-              <Text style={styles.value}>{auth()._user.displayName}</Text>
-            </View>
-            <View style={styles.details}>
-              <Text style={styles.title}>Email</Text>
-              <Text style={styles.value}>{auth()._user.email}</Text>
-            </View>
-            <View style={styles.details}>
-              <Text style={styles.title}>Languages</Text>
-              <Text style={styles.value}>English</Text>
-            </View>
-            <TouchableOpacity onPress={signOutHandler}>
-              <View style={[styles.details, { marginTop: 30 }]}>
-                <Text style={styles.value}>Sign Out</Text>
+          <View style={{ flex: 1, marginBottom: 65 }}>
+            <ScrollView>
+              <View style={styles.details}>
+                <Text style={styles.title}>Name</Text>
+                <Text style={styles.value}>{auth()._user.displayName}</Text>
               </View>
-            </TouchableOpacity>
+              <View style={styles.details}>
+                <Text style={styles.title}>Email</Text>
+                <Text style={styles.value}>{auth()._user.email}</Text>
+              </View>
+              <View style={styles.details}>
+                <Text style={styles.title}>Languages</Text>
+                <Text style={styles.value}>English</Text>
+              </View>
+              <TouchableOpacity onPress={signOutHandler}>
+                <View style={[styles.details, { marginTop: 30 }]}>
+                  <Text style={styles.value}>Sign Out</Text>
+                </View>
+              </TouchableOpacity>
 
-            {/* end */}
-          </ScrollView>
+              {/* end */}
+            </ScrollView>
+          </View>
           <Nav navigation={navigation} />
         </View>
       </ImageBackground>

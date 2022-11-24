@@ -69,13 +69,14 @@ export default function LoginScreen({ navigation }) {
                 onPress={onGoogleButtonPress}
                 style={{
                   width: "100%",
-                  maxWidth: 360,
+                  maxWidth: 480,
                   borderRadius: 10,
                   alignSelf: "center",
                   backgroundColor: "white",
                   flexDirection: "row",
-                  justifyContent: "center",
+                  justifyContent: "space-evenly",
                   alignItems: "center",
+                  paddingHorizontal: 10,
                   shadowColor: "rgba(0, 0, 0, 0.5)",
                   shadowOffset: 5,
                   shadowOpacity: 1,
@@ -83,15 +84,22 @@ export default function LoginScreen({ navigation }) {
                   elevation: 10,
                 }}
               >
-                <GoogleLogo width={30} height={30} />
+                <GoogleLogo
+                  width={30}
+                  height={30}
+                  style={{
+                    marginLeft: 10,
+                  }}
+                />
                 <Text
                   style={{
+                    flex: 1,
                     fontFamily: "inter",
+                    textAlign: "center",
                     color: "rgba(0, 0, 0, 0.7)",
                     paddingVertical: 20,
                     fontSize: 20,
                     fontWeight: "600",
-                    marginLeft: 20,
                   }}
                 >
                   Sign in with Google
@@ -111,7 +119,13 @@ export default function LoginScreen({ navigation }) {
             </View>
           </View>
         </View>
-        <View style={{ flex: 1, marginLeft: width / 20 }}>
+        <View
+          style={{
+            flex: 1,
+            // marginLeft: width > 480 ? width / 3 : width / 20,
+            alignSelf: width > 480 ? "center" : undefined,
+          }}
+        >
           <Kite />
         </View>
       </ImageBackground>
